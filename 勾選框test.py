@@ -1,11 +1,13 @@
 import customtkinter as ctk
 import tkinter as tk
 from tkinter import messagebox
+import os
 
 # 創建主窗口
 root = ctk.CTk()
 root.title("XML Compare Tool")
 root.geometry("1000x600")
+
 
 #建立左邊的功能列框架
 left_frame = ctk.CTkFrame(root, width=200)
@@ -23,7 +25,7 @@ search_button = ctk.CTkButton(left_frame, text="Search", command=search_action, 
 search_button.pack(pady=10, anchor="w")
 
 # 新增分割線
-line1 = ctk.CTkFrame(left_frame, height=1, fg_color="gray")
+line1 = ctk.CTkFrame(left_frame, height=2, fg_color="gray")
 line1.pack(fill="x", pady=5)
 
 # 功能分類及功能列表
@@ -52,7 +54,7 @@ for category, functions in categories.items():
         function_buttons[function] = button
 
 # 新增分割線
-line2 = ctk.CTkFrame(left_frame, height=1, fg_color="gray")
+line2 = ctk.CTkFrame(left_frame, height=2, fg_color="gray")
 line2.pack(fill="x", pady=5)
 
 # 位置設定部分
@@ -81,15 +83,34 @@ attachment_format_entry.grid(row=5, column=1, pady=5, padx=5)
 
 # 新增確定按鈕
 def save_and_execute():
+    global before_path, after_path, report_output_path, attachment_format
     before_path = path_before_entry.get()
     after_path = path_after_entry.get()
     report_output_path = report_output_entry.get()
     attachment_format = attachment_format_entry.get()
-    messagebox.showinfo("信息", "操作已保存并执行")
+    
+    if before_button_var.get() == 1:
+        add_extension_to_files(before_path, attachment_format)
+    if after_button_var.get() == 1:
+        add_extension_to_files(after_path, attachment_format)
+    
+    messagebox.showinfo("信息", "操作已儲存並執行")
 
 ok_button = ctk.CTkButton(right_frame, text="確定", command=save_and_execute, width=100)
-ok_button.place(relx=1.0, rely=0.0, anchor="ne", x=-30, y=30)
 
+ok_button.place(relx=1.0, rely=0.0, anchor="ne", x=-30, y=30)
+def add_extension_to_files(folder_path, extension):
+    if not folder_path or not extension:
+        return
+    
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        if os.path.isfile(file_path):
+            base, ext = os.path.splitext(filename)
+            new_filename = f"{base}.{extension}"
+            new_file_path = os.path.join(folder_path, new_filename)
+            os.rename(file_path, new_file_path)
+            
 # 灰色按鈕的邏輯
 def toggle_button(button, variable):
     if variable.get() == 0:
