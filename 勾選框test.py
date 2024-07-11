@@ -114,5 +114,5 @@ add_extension_before_button.grid(row=6, column=1, pady=10, padx=10)
 add_extension_after_button = ctk.CTkButton(position_frame, text="After", command=on_after_button_click, width=100, fg_color="grey")
 add_extension_after_button.grid(row=6, column=1, pady=10, padx=10, sticky="w")
 
-# 启动主循环
+# 啟動主循環
 root.mainloop()
