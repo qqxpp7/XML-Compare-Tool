@@ -60,17 +60,17 @@ position_frame = ctk.CTkFrame(right_frame)
 position_frame.pack(pady=20, padx=20, fill="both", expand=True)
 
 path_before_label = ctk.CTkLabel(position_frame, text="Before :", anchor="w")
-path_before_label.grid(row=0, column=0, pady=5, padx=5, sticky="w")
+path_before_label.grid(row=0, column=0, pady=20, padx=20, sticky="w")
 path_before_entry = ctk.CTkEntry(position_frame, width=400)
 path_before_entry.grid(row=0, column=1, pady=5, padx=5)
 
 path_after_label = ctk.CTkLabel(position_frame, text="After :", anchor="w")
-path_after_label.grid(row=1, column=0, pady=5, padx=5, sticky="w")
+path_after_label.grid(row=1, column=0, pady=20, padx=20, sticky="w")
 path_after_entry = ctk.CTkEntry(position_frame, width=400)
 path_after_entry.grid(row=1, column=1, pady=5, padx=5)
 
 report_output_label = ctk.CTkLabel(position_frame, text="報告產出資料夾 :", anchor="w")
-report_output_label.grid(row=2, column=0, pady=20, padx=5, sticky="w")
+report_output_label.grid(row=2, column=0, pady=20, padx=20, sticky="w")
 report_output_entry = ctk.CTkEntry(position_frame, width=400)
 report_output_entry.grid(row=2, column=1, pady=5, padx=5)
 
