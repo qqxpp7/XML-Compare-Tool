@@ -1,6 +1,6 @@
 import customtkinter as ctk
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 import os
 
 attachment_format="xml" # 預設副檔名為 xml
@@ -58,29 +58,57 @@ for category, functions in categories.items():
         line2 = ctk.CTkFrame(left_frame, height=2, fg_color="lightgray")
         line2.pack(fill="x", pady=5)
 
-# 位置設定部分
-position_frame = ctk.CTkFrame(right_frame)
-position_frame.pack(pady=20, padx=20, fill="both", expand=True)
+# 右上區域框架
+top_right_frame = ctk.CTkFrame(right_frame)
+top_right_frame.pack(pady=10, padx=10, fill="x")
 
-path_before_label = ctk.CTkLabel(position_frame, text="Before 資料夾 :", anchor="w")
+# 右下區域框架
+bottom_right_frame = ctk.CTkFrame(right_frame)
+bottom_right_frame.pack(pady=10, padx=10, fill="both", expand=True)
+
+def select_folder(entry):
+    folder_path = filedialog.askdirectory()
+    if folder_path:
+        entry.delete(0, tk.END)
+        entry.insert(0, folder_path)
+
+path_before_label = ctk.CTkLabel(top_right_frame, text="Before 資料夾:", anchor="w")
 path_before_label.grid(row=0, column=0, pady=20, padx=20, sticky="w")
-path_before_entry = ctk.CTkEntry(position_frame, width=400)
+path_before_entry = ctk.CTkEntry(top_right_frame, width=400)
 path_before_entry.grid(row=0, column=1, pady=5, padx=5)
+path_before_button = ctk.CTkButton(top_right_frame, text="Browse", command=lambda: select_folder(path_before_entry))
+path_before_button.grid(row=0, column=2, pady=5, padx=5)
 
-path_after_label = ctk.CTkLabel(position_frame, text="After 資料夾 :", anchor="w")
+path_after_label = ctk.CTkLabel(top_right_frame, text="After Folder Path:", anchor="w")
 path_after_label.grid(row=1, column=0, pady=20, padx=20, sticky="w")
-path_after_entry = ctk.CTkEntry(position_frame, width=400)
+path_after_entry = ctk.CTkEntry(top_right_frame, width=400)
 path_after_entry.grid(row=1, column=1, pady=5, padx=5)
+path_after_button = ctk.CTkButton(top_right_frame, text="Browse", command=lambda: select_folder(path_after_entry))
+path_after_button.grid(row=1, column=2, pady=5, padx=5)
 
-report_output_label = ctk.CTkLabel(position_frame, text="報告產出資料夾 :", anchor="w")
+report_output_label = ctk.CTkLabel(top_right_frame, text="Report Output Folder:", anchor="w")
 report_output_label.grid(row=2, column=0, pady=20, padx=20, sticky="w")
-report_output_entry = ctk.CTkEntry(position_frame, width=400)
+report_output_entry = ctk.CTkEntry(top_right_frame, width=400)
 report_output_entry.grid(row=2, column=1, pady=5, padx=5)
+report_output_button = ctk.CTkButton(top_right_frame, text="Browse", command=lambda: select_folder(report_output_entry))
+report_output_button.grid(row=2, column=2, pady=5, padx=5)
 
-attachment_format_label = ctk.CTkLabel(position_frame, text="加副檔名：", anchor="w")
-attachment_format_label.grid(row=5, column=0, pady=20, padx=20, sticky="w")
-attachment_format_entry = ctk.CTkEntry(position_frame, width=200)
-attachment_format_entry.grid(row=5, column=1, pady=5, padx=5, sticky="w")
+# 新增儲存按鈕
+def save_path():
+    global before_path, after_path, report_output_path
+    before_path = path_before_entry.get()
+    after_path = path_after_entry.get()
+    report_output_path = report_output_entry.get()
+    messagebox.showinfo("信息", "路徑已保存")
+    
+save_button = ctk.CTkButton(top_right_frame, text="儲存", command=save_path, width=100)
+save_button.grid(row=3, column=2, columnspan=3, pady=10, padx=10)
+
+attachment_format_label = ctk.CTkLabel(bottom_right_frame, text="Attachment File Name Format:", anchor="w")
+attachment_format_label.grid(row=0, column=0, pady=5, padx=5, sticky="w")
+attachment_format_entry = ctk.CTkEntry(bottom_right_frame, width=400)
+attachment_format_entry.grid(row=0, column=1, pady=5, padx=5)
+attachment_format_entry.insert(0, "xml")  # 预设副档名为 xml
 
             
 # 灰色按鈕的邏輯
@@ -101,22 +129,11 @@ def on_after_button_click():
     after_button_var.set(1 if after_button_var.get() == 0 else 0)
     toggle_button(add_extension_after_button, after_button_var)
 
-add_extension_before_button = ctk.CTkButton(position_frame, text="Before", command=on_before_button_click, width=100, fg_color="grey")
-add_extension_before_button.grid(row=6, column=1, pady=10, padx=10, sticky="w")
+add_extension_before_button = ctk.CTkButton(bottom_right_frame, text="Before", command=on_before_button_click, width=100, fg_color="blue")
+add_extension_before_button.grid(row=1, column=0, pady=10, padx=10, sticky="w")
 
-add_extension_after_button = ctk.CTkButton(position_frame, text="After", command=on_after_button_click, width=100, fg_color="grey")
-add_extension_after_button.grid(row=6, column=1, pady=10, padx=10)
-
-# 新增儲存按鈕
-def save_path():
-    global before_path, after_path, report_output_path
-    before_path = path_before_entry.get()
-    after_path = path_after_entry.get()
-    report_output_path = report_output_entry.get()
-    messagebox.showinfo("信息", "路徑已保存")
-
-ok_button = ctk.CTkButton(right_frame, text="儲存", command=save_path, width=100)
-ok_button.place(relx=1.0, rely=0.0, anchor="ne", x=-30, y=250)
+add_extension_after_button = ctk.CTkButton(bottom_right_frame, text="After", command=on_after_button_click, width=100, fg_color="blue")
+add_extension_after_button.grid(row=1, column=1, pady=10, padx=10)
 
 
 # 新增確定按鈕
@@ -131,8 +148,8 @@ def execute():
         
     messagebox.showinfo("信息", "文件名已修改")
     
-ok_button = ctk.CTkButton(right_frame, text="執行", command=execute, width=100)
-ok_button.place(relx=1.0, rely=0.0, anchor="ne", x=-30, y=450)
+ok_button = ctk.CTkButton(bottom_right_frame, text="修改", command=execute, width=100)
+ok_button.grid(row=2, column=4, columnspan=2, pady=10, padx=10)
 
 def add_extension_to_files(folder_path, extension):
     if not folder_path or not extension:
@@ -146,5 +163,11 @@ def add_extension_to_files(folder_path, extension):
             new_file_path = os.path.join(folder_path, new_filename)
             os.rename(file_path, new_file_path)
 
-# 啟動主循環
+# 正確處理關閉視窗事件
+def on_closing():
+    root.destroy()
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
+
+#啟動主循環
 root.mainloop()
