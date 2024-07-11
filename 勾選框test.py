@@ -2,31 +2,31 @@ import customtkinter as ctk
 import tkinter as tk
 from tkinter import messagebox
 
-# 创建主窗口
+# 創建主窗口
 root = ctk.CTk()
 root.title("XML Compare Tool")
 root.geometry("1000x600")
 
-# 创建左边的功能栏框架
+#建立左邊的功能列框架
 left_frame = ctk.CTkFrame(root, width=200)
 left_frame.pack(side="left", fill="y", padx=10, pady=10)
 
-# 创建右边的显示框架
+#建立右邊的顯示框架
 right_frame = ctk.CTkFrame(root)
 right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
-# 添加搜索按钮
+# 新增搜尋按鈕
 def search_action():
     messagebox.showinfo("Search", "Search functionality is not yet implemented.")
 
 search_button = ctk.CTkButton(left_frame, text="Search", command=search_action, width=180, fg_color="white", text_color="black")
 search_button.pack(pady=10, anchor="w")
 
-# 添加分割线
+# 新增分割線
 line1 = ctk.CTkFrame(left_frame, height=1, fg_color="gray")
 line1.pack(fill="x", pady=5)
 
-# 功能分类及功能列表
+# 功能分類及功能列表
 categories = {
     "主功能": ["01 位置設定", "02 XML 拆分", "03 找出差異", "04 比對"],
     "其他功能": ["Copy 資料", "Element 分割"]
@@ -51,11 +51,11 @@ for category, functions in categories.items():
         button.pack(pady=5, anchor="w")
         function_buttons[function] = button
 
-# 添加分割线
+# 新增分割線
 line2 = ctk.CTkFrame(left_frame, height=1, fg_color="gray")
 line2.pack(fill="x", pady=5)
 
-# 位置设定部分
+# 位置設定部分
 position_frame = ctk.CTkFrame(right_frame)
 position_frame.pack(pady=20, padx=20, fill="both", expand=True)
 
@@ -79,7 +79,7 @@ attachment_format_label.grid(row=5, column=0, pady=20, padx=20, sticky="w")
 attachment_format_entry = ctk.CTkEntry(position_frame, width=200)
 attachment_format_entry.grid(row=5, column=1, pady=5, padx=5)
 
-# 添加确定按钮
+# 新增確定按鈕
 def save_and_execute():
     before_path = path_before_entry.get()
     after_path = path_after_entry.get()
@@ -90,7 +90,7 @@ def save_and_execute():
 ok_button = ctk.CTkButton(right_frame, text="確定", command=save_and_execute, width=100)
 ok_button.place(relx=1.0, rely=0.0, anchor="ne", x=-30, y=30)
 
-# 灰色按钮的逻辑
+# 灰色按鈕的邏輯
 def toggle_button(button, variable):
     if variable.get() == 0:
         button.configure(fg_color="grey")
