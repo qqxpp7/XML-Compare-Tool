@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jul 12 09:41:44 2024
-
-@author: a9037
-"""
-
 import customtkinter as ctk
 from tkinter import ttk
 import tkinter as tk
