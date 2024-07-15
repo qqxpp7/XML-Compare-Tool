@@ -18,44 +18,38 @@ def load_xml_files(path):
     files = [os.path.join(path, f) for f in os.listdir(path) if f.endswith('.xml')]
     return files
 
-def save_books_from_xml(xml_path, node_name, child_nodes,split_character):
+def save_books_from_xml(xml_path, node_name, child_nodes, split_character):
     # Load the XML file
     tree = ET.parse(xml_path)
     root = tree.getroot()
+    nodes = [root] if root.tag == node_name else root.findall('.//' + node_name)
     
-    if root.tag != node_name:
-        # Iterate over each book-like node in the XML
-        for node in root.findall('.//'+node_name):
-            elements = {}
-            for child in child_nodes:
-                element = node.find('.//' + child)
-                if element is not None:
-                    elements[child] = create_valid_filename(element.text)
-    
-            # Create filename based on the elements
-            filename_elements = [f"{value}" for key, value in elements.items()]
-            filename = split_character.join(filename_elements) + ".xml"
-            
-            # Create a new tree for the node and save it
-            node_tree = ET.ElementTree(node)
-            node_tree.write(filename)
-            print(f"File saved: {filename}")
-    else: 
+    for node in nodes:
         elements = {}
         for child in child_nodes:
-            element = root.find('.//' + child)
+            element = node.find('.//' + child)
             if element is not None:
                 elements[child] = create_valid_filename(element.text)
 
         # Create filename based on the elements
-        filename_elements = [f"{value}" for key, value in elements.items()]
+        filename_elements = [elements[key] for key in child_nodes if key in elements]
         filename = split_character.join(filename_elements) + ".xml"
+        original_filename = filename
+        serial_number = 2
         
-        # Create a new tree for the root and save it
-        node_tree = ET.ElementTree(root)
+        while filename in filename_count:
+            filename = f"{original_filename[:-4]}{split_character}{serial_number}.xml"
+            serial_number += 1
+        
+        filename_count[filename] = 1
+        node_tree = ET.ElementTree(node)
         node_tree.write(filename)
         print(f"File saved: {filename}")
 
+        if serial_number > 2:
+            print(f"Warning: Duplicate filename detected. '{original_filename}' has been renamed to '{filename}' to avoid overwriting.")
+# Global dictionary to keep track of filename occurrences
+filename_count = {}
 # Example usage
 folder_path = 'C:/Users/a9037/OneDrive/文件/XML_compare/After'
 file_path = load_xml_files(folder_path)
