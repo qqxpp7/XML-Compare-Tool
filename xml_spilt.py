@@ -89,6 +89,7 @@ def default_input(frame, row, label_text, entry_width,default_text):
     entry.grid(row=row, column=1, sticky="w")
     entry.insert(0, default_text) # 預設 xml
     return entry
+
 def create_valid_filename(text):
     # 使用正則表達式移除或替換檔案名中的非法字符
     return re.sub(r'[^\w\-_\.]', '', text)
@@ -105,7 +106,8 @@ def on_dropdown_select(*args):
         folder_path = random.choice(["Before", "After"])
     file_path = load_xml_file(folder_path)
     if file_path:
-        display_xml_content(file_path)
+        display_xml_content([file_path])
+        # print(folder_path)
         
 def load_xml_content(file_paths):
     global tree, root_element
@@ -120,9 +122,10 @@ def populate_all_nodes_list():
     all_possible_nodes = {child.tag for child in root_element.iter()}
     for node in all_possible_nodes:
         all_nodes_listbox.insert(tk.END, node)
-
+        
 def display_xml_content(file_paths=None):
     text_area.delete('1.0', tk.END)
+    # print(file_paths)
     if not file_paths:
         return
 
@@ -132,7 +135,7 @@ def display_xml_content(file_paths=None):
 
         def display_node(node, indent=""):
             if node.tag in child_nodes or not child_nodes:
-                text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else 'No content'}\n")
+                text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else ''}\n")
             for child in node:
                 display_node(child, indent + "    ")
 
@@ -222,6 +225,10 @@ options = ["All", "Before", "After"]
 selected_option = tk.StringVar()
 selected_option.set(options[0])
 create_combobox()
+selected_option.trace("w", on_dropdown_select)
+
+# # 初始化時顯示選定的資料夾內容
+# on_dropdown_select()
 # Global dictionary to keep track of filename occurrences
 filename_count = {}
 ok_button = ctk.CTkButton(top_right_frame, text="拆分", command=split_xml)
@@ -249,7 +256,7 @@ remove_button = ctk.CTkButton(rig_middle_right_frame, text="-", command=remove_c
 remove_button.pack(side=tk.LEFT, pady=5)
 
 #右下
-split_element_entry = default_input(bottom_right_frame, 1, "拆分Element：", 400, "ns0:abap")
+split_element_entry = default_input(bottom_right_frame, 1, "拆分Element：", 400, "book")
 delimiter_entry = default_input(bottom_right_frame, 2, "分隔符號：", 200, "&")
 
 # 流水號標籤

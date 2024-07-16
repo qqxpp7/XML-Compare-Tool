@@ -22,7 +22,8 @@ def display_xml_content():
 
     def display_node(node, indent=""):
         if node.tag in child_nodes or not child_nodes:
-            text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else 'No content'}\n")
+            text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else ''}\n")
+            # text_area.insert(tk.END, f"{node.text.strip() if node.text and node.text.strip() else ''}\n")
         for child in node:
             display_node(child, indent + "    ")
 
