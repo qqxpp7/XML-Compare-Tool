@@ -3,6 +3,7 @@ import customtkinter as ctk
 import re
 from tkinter import scrolledtext, messagebox
 import xml.etree.ElementTree as ET
+import os
 
 def load_xml_content():
     global tree, root_element
@@ -151,7 +152,8 @@ ok_button = ctk.CTkButton(middle_right_rig_frame, text="OK", command=split_xml)
 ok_button.pack(side=tk.BOTTOM, pady=10)
 
 # 加載 XML 文件
-file_path = 'C:/Users/a9037/OneDrive/文件/XML_compare/After/123.xml'
+current_directory = os.getcwd()
+file_path = os.path.join(current_directory, 'After', '123.xml')
 load_xml_content()
 
 root.mainloop()

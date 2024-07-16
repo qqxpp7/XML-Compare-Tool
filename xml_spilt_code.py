@@ -51,7 +51,8 @@ def save_books_from_xml(xml_path, node_name, child_nodes, split_character):
 # Global dictionary to keep track of filename occurrences
 filename_count = {}
 # Example usage
-folder_path = 'C:/Users/a9037/OneDrive/文件/XML_compare/After'
+current_directory = os.getcwd()
+folder_path = os.path.join(current_directory, 'After')
 file_path = load_xml_files(folder_path)
 node_name = 'book'
 child_nodes = ['name', 'birthdate']  # Add other child nodes as needed
