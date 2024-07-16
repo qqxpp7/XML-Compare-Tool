@@ -107,7 +107,6 @@ def on_dropdown_select(*args):
     file_path = load_xml_file(folder_path)
     if file_path:
         display_xml_content([file_path])
-        # print(folder_path)
         
 def load_xml_content(file_paths):
     global tree, root_element
@@ -130,17 +129,17 @@ def display_xml_content(file_paths=None):
         return
 
     for file_path in file_paths:
-        tree = ET.parse(file_path)
-        root_element = tree.getroot()
-
+        # tree = ET.parse(file_path)
+        # root_element = tree.getroot()
+        load_xml_content(file_paths)
         def display_node(node, indent=""):
             if node.tag in child_nodes or not child_nodes:
-                text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else ''}\n")
+                text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else ''}\n")               
             for child in node:
                 display_node(child, indent + "    ")
 
         display_node(root_element)
-        text_area.insert(tk.END, "\n")
+        # text_area.insert(tk.END, "\n")
         
 def on_node_select(event):
     widget = event.widget
@@ -209,7 +208,12 @@ def save_books_from_xml(xml_path, node_name, child_nodes, split_character):
         serial_number = 2
         
         while filename in filename_count:
-            filename = f"{original_filename[:-4]}{split_character}{serial_number}.xml"
+            if sequence_var.get() == "前面":
+                filename = f"{serial_number}{split_character}{original_filename}"
+            elif sequence_var.get() == "後面":
+                filename = f"{original_filename[:-4]}{split_character}{serial_number}.xml"
+            else:
+                filename = original_filename  # 無序號選擇
             serial_number += 1
         
         filename_count[filename] = 1
@@ -218,14 +222,13 @@ def save_books_from_xml(xml_path, node_name, child_nodes, split_character):
         print(f"File saved: {filename}")
 
         if serial_number > 2:
-            print(f"Warning: Duplicate filename detected. '{original_filename}' has been renamed to '{filename}' to avoid overwriting.")    
+            print(f"Warning: Duplicate filename detected：'{original_filename}'")    
 
 # 下拉式選單的選項
 options = ["All", "Before", "After"]
 selected_option = tk.StringVar()
 selected_option.set(options[0])
 create_combobox()
-selected_option.trace("w", on_dropdown_select)
 
 # # 初始化時顯示選定的資料夾內容
 # on_dropdown_select()
@@ -238,7 +241,6 @@ ok_button.grid(row=0, column=3, pady=10, padx=10, sticky="w")
 all_nodes_listbox = tk.Listbox(left_middle_right_frame, selectmode=tk.SINGLE)
 all_nodes_listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 all_nodes_listbox.bind('<<ListboxSelect>>', on_node_select)
-
 child_nodes = set()
 
 # 右中間框架
