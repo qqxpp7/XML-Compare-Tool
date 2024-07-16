@@ -1,10 +1,11 @@
-import customtkinter as ctk
-import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
 import os
-import random
 import re
+import random
+import tkinter as tk
+import customtkinter as ctk
 import xml.etree.ElementTree as ET
+from tkinter import ttk, messagebox, scrolledtext
+import shared_data 
 
 class XMLSplitPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -14,6 +15,9 @@ class XMLSplitPage(ctk.CTkFrame):
         self.child_nodes = set()
         self.filename_count = {}
         self.create_widgets()
+        self.before_path = shared_data.before_path
+        self.after_path = shared_data.after_path
+        self.report_output_path = shared_data.report_output_path
 
     def create_widgets(self):
         self.top_right_frame = ctk.CTkFrame(self)

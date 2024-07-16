@@ -8,17 +8,11 @@ from page5 import ComparisonPage
 from page6 import CopyDataPage
 from page7 import ElementSplitPage
 
-
 class XMLCompareTool:
     def __init__(self, root):
         self.root = root
         self.root.title("XML Compare Tool")
         self.root.geometry("1000x600")
-
-        # 初始化共享参数
-        self.before_path = tk.StringVar()
-        self.after_path = tk.StringVar()
-        self.report_output_path = tk.StringVar()
         
         self.selected_function = tk.StringVar(value="01 位置設定")
         self.function_buttons = {}

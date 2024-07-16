@@ -4,10 +4,11 @@ Created on Tue Jul 16 14:44:42 2024
 
 @author: a9037
 """
+import os
 import tkinter as tk
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
-import os
+import shared_data
 
 class PositionSettingPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -21,7 +22,7 @@ class PositionSettingPage(ctk.CTkFrame):
 
         self.bottom_right_frame = ctk.CTkFrame(self)
         self.bottom_right_frame.pack(pady=10, padx=10, fill="both", expand=True)
-
+       
         self.path_before_entry = self.create_path_selector(self.top_right_frame, 0, "Before 資料夾:", 400, "Browse", self.select_folder)
         self.path_after_entry = self.create_path_selector(self.top_right_frame, 1, "After 資料夾:", 400, "Browse", self.select_folder)
         self.report_output_entry = self.create_path_selector(self.top_right_frame, 2, "報告產出資料夾：", 400, "Browse", self.select_folder)
@@ -59,9 +60,9 @@ class PositionSettingPage(ctk.CTkFrame):
             entry.insert(0, folder_path)
 
     def save_path(self):
-        self.controller.before_path.set(self.path_before_entry.get())
-        self.controller.after_path.set(self.path_after_entry.get())
-        self.controller.report_output_path.set(self.report_output_entry.get())
+        shared_data.before_path.set(self.path_before_entry.get())
+        shared_data.after_path.set(self.path_after_entry.get())
+        shared_data.report_output_path.set(self.report_output_entry.get())
         messagebox.showinfo("信息", "路徑已保存")
 
     def default_input(self, frame, row, label_text, entry_width, default_text):
@@ -103,7 +104,7 @@ class PositionSettingPage(ctk.CTkFrame):
         self.attachment_format = self.attachment_format_entry.get()
         
         if self.before_button_var.get() == 1:
-            self.add_extension_to_files(self.controller.before_path.get(), self.attachment_format)
+            self.add_extension_to_files(shared_data.before_path.get(), self.attachment_format)
         if self.after_button_var.get() == 1:
-            self.add_extension_to_files(self.controller.after_path.get(), self.attachment_format)       
+            self.add_extension_to_files(shared_data.after_path.get(), self.attachment_format)       
         messagebox.showinfo("信息", "文件名已修改")
