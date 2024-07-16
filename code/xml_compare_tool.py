@@ -19,7 +19,7 @@ class XMLCompareTool:
         self.before_path = tk.StringVar()
         self.after_path = tk.StringVar()
         self.report_output_path = tk.StringVar()
-
+        
         self.selected_function = tk.StringVar(value="01 位置設定")
         self.function_buttons = {}
 
@@ -93,5 +93,5 @@ class XMLCompareTool:
 
 if __name__ == "__main__":
     root = ctk.CTk()
-    app = XMLCompareTool(root)
+    controller = XMLCompareTool(root)
     root.mainloop()
