@@ -101,6 +101,7 @@ def load_xml_file(path):
     return os.path.join(path, random.choice(files))
 
 def on_dropdown_select(*args):
+    global file_path
     folder_path = selected_option.get()  # 根據選擇的選項來設置資料夾路徑
     if folder_path == "All":
         folder_path = random.choice(["Before", "After"])
@@ -124,21 +125,16 @@ def populate_all_nodes_list():
         
 def display_xml_content(file_paths=None):
     text_area.delete('1.0', tk.END)
-    # print(file_paths)
-    if not file_paths:
-        return
-
-    for file_path in file_paths:
-        # tree = ET.parse(file_path)
-        # root_element = tree.getroot()
-        load_xml_content(file_paths)
-        def display_node(node, indent=""):
+    load_xml_content(file_paths)
+    print(file_paths)
+    
+    def display_node(node, indent=""):
             if node.tag in child_nodes or not child_nodes:
                 text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else ''}\n")               
             for child in node:
                 display_node(child, indent + "    ")
 
-        display_node(root_element)
+    display_node(root_element)
         # text_area.insert(tk.END, "\n")
         
 def on_node_select(event):
@@ -177,18 +173,26 @@ def update_option_list():
     display_xml_content()
 
 def split_xml():
+    global file_path
     if not child_nodes:
         messagebox.showinfo("Error", "Please select at least one child node.")
         return
-    save_books_from_xml(file_path, delimiter_entry, list(child_nodes), split_element_entry)
+    folder_path = selected_option.get()
+    if folder_path == "All":
+        save_books_from_xml(file_path, delimiter_entry.get(), list(child_nodes), split_element_entry.get(), "Before")
+        save_books_from_xml(file_path, delimiter_entry.get(), list(child_nodes), split_element_entry.get(), "After")
+    else:
+        save_books_from_xml(file_path, delimiter_entry.get(), list(child_nodes), split_element_entry.get(), folder_path)
     messagebox.showinfo("Success", "XML split successfully!")
         
 def create_combobox():
-    combobox = ttk.Combobox(top_right_frame, textvariable=selected_option, values=options)
+    combobox = ttk.Combobox(top_right_frame,
+                            textvariable=selected_option,
+                            values=options,state="readonly")                           
     combobox.grid(row=0, column=0, pady=10, padx=30)
     selected_option.trace("w", on_dropdown_select)
     
-def save_books_from_xml(xml_path, node_name, child_nodes, split_character):
+def save_books_from_xml(xml_path, node_name, child_nodes, split_character, base_folder):
     # Load the XML file
     tree = ET.parse(xml_path)
     root = tree.getroot()
@@ -218,20 +222,22 @@ def save_books_from_xml(xml_path, node_name, child_nodes, split_character):
         
         filename_count[filename] = 1
         node_tree = ET.ElementTree(node)
-        node_tree.write(filename)
-        print(f"File saved: {filename}")
+        
+        # Save in the specified folder
+        output_folder = os.path.join(base_folder, filename)
+        os.makedirs(os.path.dirname(output_folder), exist_ok=True)
+        node_tree.write(output_folder)
+        print(f"File saved: {output_folder}")
 
         if serial_number > 2:
             print(f"Warning: Duplicate filename detected：'{original_filename}'")    
 
 # 下拉式選單的選項
-options = ["All", "Before", "After"]
 selected_option = tk.StringVar()
-selected_option.set(options[0])
+selected_option.set("Select Folder")
+options = ["All", "Before", "After"]
 create_combobox()
 
-# # 初始化時顯示選定的資料夾內容
-# on_dropdown_select()
 # Global dictionary to keep track of filename occurrences
 filename_count = {}
 ok_button = ctk.CTkButton(top_right_frame, text="拆分", command=split_xml)
