@@ -12,6 +12,8 @@ class XMLSplitPage(ctk.CTkFrame):
         super().__init__(parent)
         self.controller = controller
         self.file_path = None
+        self.all_file_path = None
+        self.folder_path = None
         self.child_nodes = set()
         self.filename_count = {}
         self.create_widgets()        
@@ -125,14 +127,20 @@ class XMLSplitPage(ctk.CTkFrame):
     '''
     使用正則表達式移除或替換檔案名中的非法字符
     '''
-
-    def load_xml_file(self, path):
+    def random_load_xml_file(self, path):
         files = [f for f in os.listdir(path) if f.endswith('.xml')]
         if not files:
             return None
         return os.path.join(path, random.choice(files))
     '''
     載入選定資料夾內的隨機一個xml檔案
+    '''
+    
+    def load_xml_files(self, path):
+        files = [os.path.join(path, f) for f in os.listdir(path) if f.endswith('.xml')]
+        return files
+    '''
+    載入選定資料夾內的所有xml檔案
     '''
 
     def on_dropdown_select(self, *args):
@@ -141,7 +149,7 @@ class XMLSplitPage(ctk.CTkFrame):
         # print(self.before_path,"%", self.after_path)
         selected_option = self.selected_option.get()  # 根據選擇的選項來設置資料夾路徑
         if selected_option == "All":
-            folder_path = random.choice([self.before_path, self.after_path])
+            folder_path = self.before_path
             # print(selected_option, "+", folder_path)
         elif selected_option == "Before":
             folder_path = self.before_path
@@ -153,11 +161,14 @@ class XMLSplitPage(ctk.CTkFrame):
             folder_path = None
         
         if folder_path:
-            self.file_path = self.load_xml_file(folder_path)
+            self.file_path = self.random_load_xml_file(folder_path)
+            self.all_file_path = self.load_xml_files(folder_path)        
         if self.file_path:
-            self.display_xml_content([self.file_path])
-            print("on dropdown select")
+            self.load_xml_content([self.file_path])
+            # self.display_xml_content([self.file_path])
+            print("******on dropdown select*****")
             print(self.file_path)
+            print(self.all_file_path)
     '''
     選擇All的時候會隨機選擇before或after路徑，選好資料夾後會跳到load_xml_file隨機選擇一個檔案
     選好檔案路徑後再透過display_xml_content展示檔案內容
@@ -166,6 +177,7 @@ class XMLSplitPage(ctk.CTkFrame):
     def load_xml_content(self, file_paths):
         if not file_paths:
             return
+        global tree, root_element
         tree = ET.parse(file_paths[0])
         self.root_element = tree.getroot()
         self.populate_all_nodes_list()
@@ -181,7 +193,7 @@ class XMLSplitPage(ctk.CTkFrame):
     
     def display_xml_content(self, file_paths=None):
         self.text_area.delete('1.0', tk.END)
-        self.load_xml_content(file_paths)
+        # self.load_xml_content(file_paths)
         print("file_paths?????")
         print(file_paths)
         
@@ -226,19 +238,21 @@ class XMLSplitPage(ctk.CTkFrame):
         self.option_listbox.delete(0, tk.END)
         for node in self.child_nodes:
             self.option_listbox.insert(tk.END, node)
-        print("update option list")
-        self.display_xml_content()
+        print("--------update option list--------")
+        self.display_xml_content([self.file_path])
 
     def split_xml(self):
         if not self.child_nodes:
             messagebox.showinfo("Error", "Please select at least one child node.")
             return
-        folder_path = self.selected_option.get()
-        if folder_path == "All":
-            self.save_books_from_xml(self.file_path, self.delimiter_entry.get(), list(self.child_nodes), self.split_element_entry.get(), "Before")
-            self.save_books_from_xml(self.file_path, self.delimiter_entry.get(), list(self.child_nodes), self.split_element_entry.get(), "After")
+        selected_option = self.selected_option.get()  # 根據選擇的選項來設置資料夾路徑
+        if selected_option == "All":
+            for file in self.all_file_path:
+                self.save_books_from_xml(self.all_file_path, self.delimiter_entry.get(), list(self.child_nodes), self.split_element_entry.get(), shared_data.before_path)
+                self.save_books_from_xml(self.all_file_path, self.delimiter_entry.get(), list(self.child_nodes), self.split_element_entry.get(), shared_data.before_path)
         else:
-            self.save_books_from_xml(self.file_path, self.delimiter_entry.get(), list(self.child_nodes), self.split_element_entry.get(), folder_path)
+            for file in self.all_file_path:
+                self.save_books_from_xml(self.all_file_path, self.delimiter_entry.get(), list(self.child_nodes), self.split_element_entry.get(), self.folder_path)
         messagebox.showinfo("Success", "XML split successfully!")
             
     def save_books_from_xml(self, xml_path, node_name, child_nodes, split_character, base_folder):
