@@ -17,7 +17,6 @@ class XMLSplitPage(ctk.CTkFrame):
         self.create_widgets()
         self.before_path = shared_data.before_path
         self.after_path = shared_data.after_path
-        self.report_output_path = shared_data.report_output_path
 
     def create_widgets(self):
         self.top_right_frame = ctk.CTkFrame(self)

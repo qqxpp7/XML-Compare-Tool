@@ -1,5 +1,6 @@
 import tkinter as tk
 import customtkinter as ctk
+import shared_data
 from page1 import SearchPage
 from page2 import PositionSettingPage
 from page3 import XMLSplitPage
@@ -86,6 +87,7 @@ class XMLCompareTool:
         return mapping.get(function, "PositionSettingPage")        
 
 if __name__ == "__main__":
-    root = ctk.CTk()
-    controller = XMLCompareTool(root)
+    root = ctk.CTk()  # 創建主窗口
+    shared_data.init_shared_vars()  # 初始化共享變數
+    app = XMLCompareTool(root)
     root.mainloop()
