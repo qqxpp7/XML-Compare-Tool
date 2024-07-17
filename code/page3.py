@@ -127,18 +127,25 @@ class XMLSplitPage(ctk.CTkFrame):
     '''
     使用正則表達式移除或替換檔案名中的非法字符
     '''
-    def random_load_xml_file(self, path):
-        files = [f for f in os.listdir(path) if f.endswith('.xml')]
+    def random_load_xml_file(self, *paths):
+        files = []
+        for path in paths:
+            if os.path.isdir(path):
+                files.extend([os.path.join(path, f) for f in os.listdir(path) if f.endswith('.xml')])
         if not files:
             return None
-        return os.path.join(path, random.choice(files))
+        return random.choice(files)
     '''
     載入選定資料夾內的隨機一個xml檔案
     '''
     
-    def load_xml_files(self, path):
-        files = [os.path.join(path, f) for f in os.listdir(path) if f.endswith('.xml')]
+    def load_xml_files(self, *paths):
+        files = []
+        for path in paths:
+            if os.path.isdir(path):
+                files.extend([os.path.join(path, f) for f in os.listdir(path) if f.endswith('.xml')])
         return files
+
     '''
     載入選定資料夾內的所有xml檔案
     '''
@@ -149,20 +156,19 @@ class XMLSplitPage(ctk.CTkFrame):
         # print(self.before_path,"%", self.after_path)
         selected_option = self.selected_option.get()  # 根據選擇的選項來設置資料夾路徑
         if selected_option == "All":
-            folder_path = self.before_path
-            # print(selected_option, "+", folder_path)
+            self.folder_path = [self.before_path, self.after_path]  # 使用列表來存儲多個路徑   
         elif selected_option == "Before":
-            folder_path = self.before_path
+            self.folder_path = [self.before_path]
             # print(selected_option, "+",folder_path)
         elif selected_option == "After":
-            folder_path = self.after_path
+            self.folder_path = [self.after_path]
             # print(selected_option, "+", folder_path)
         else:
-            folder_path = None
+            self.folder_path = None
         
-        if folder_path:
-            self.file_path = self.random_load_xml_file(folder_path)
-            self.all_file_path = self.load_xml_files(folder_path)        
+        if self.folder_path:
+            self.file_path = self.random_load_xml_file(*self.folder_path)
+            self.all_file_path = self.load_xml_files(*self.folder_path)        
         if self.file_path:
             self.load_xml_content([self.file_path])
             # self.display_xml_content([self.file_path])
@@ -245,52 +251,78 @@ class XMLSplitPage(ctk.CTkFrame):
         if not self.child_nodes:
             messagebox.showinfo("Error", "Please select at least one child node.")
             return
+        
+        before_new_folder = os.path.join(self.before_path, "before_split")
+        after_new_folder = os.path.join(self.after_path, "after_split")
+         
+        # 確保新資料夾已經創建
+        os.makedirs(before_new_folder, exist_ok=True)
+        os.makedirs(after_new_folder, exist_ok=True)
+         
+        print("All file paths:", self.all_file_path)  # 調試信息
+        
         selected_option = self.selected_option.get()  # 根據選擇的選項來設置資料夾路徑
         if selected_option == "All":
             for file in self.all_file_path:
-                self.save_books_from_xml(self.all_file_path, self.delimiter_entry.get(), list(self.child_nodes), self.split_element_entry.get(), shared_data.before_path)
-                self.save_books_from_xml(self.all_file_path, self.delimiter_entry.get(), list(self.child_nodes), self.split_element_entry.get(), shared_data.before_path)
-        else:
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), shared_data.before_path)
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), shared_data.after_path)
+        elif selected_option == "Before":
             for file in self.all_file_path:
-                self.save_books_from_xml(self.all_file_path, self.delimiter_entry.get(), list(self.child_nodes), self.split_element_entry.get(), self.folder_path)
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), before_new_folder)
+        elif selected_option == "After":
+            for file in self.all_file_path:
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
+        else:
+            messagebox.showinfo("Error", "Please select at least one option.")
+            
         messagebox.showinfo("Success", "XML split successfully!")
             
     def save_books_from_xml(self, xml_path, node_name, child_nodes, split_character, base_folder):
-        # Load the XML file
-        tree = ET.parse(xml_path)
-        root = tree.getroot()
-        nodes = [root] if root.tag == node_name else root.findall('.//' + node_name)
-        
-        for node in nodes:
-            elements = {}
-            for child in child_nodes:
-                element = node.find('.//' + child)
-                if element is not None:
-                    elements[child] = self.create_valid_filename(element.text)
-
-            # Create filename based on the elements
-            filename_elements = [elements[key] for key in child_nodes if key in elements]
-            filename = split_character.join(filename_elements) + ".xml"
-            original_filename = filename
-            serial_number = 2
+        try:
+            print(f"Loading XML file: {xml_path}")  # 調試信息
+            # Load the XML file
+            tree = ET.parse(xml_path)
+            root = tree.getroot()
             
-            while filename in self.filename_count:
-                if self.sequence_var.get() == "前面":
-                    filename = f"{serial_number}{split_character}{original_filename}"
-                elif self.sequence_var.get() == "後面":
-                    filename = f"{original_filename[:-4]}{split_character}{serial_number}.xml"
-                else:
-                    filename = original_filename  # 無序號選擇
-                serial_number += 1
+            print(f"Root tag: {root.tag}, searching for node: {node_name}")  # 調試信息
+            nodes = [root] if root.tag == node_name else root.findall('.//' + node_name)
+            print(f"Found {len(nodes)} nodes")  # 調試信息
             
-            self.filename_count[filename] = 1
-            node_tree = ET.ElementTree(node)
-            
-            # Save in the specified folder
-            output_folder = os.path.join(base_folder, filename)
-            os.makedirs(os.path.dirname(output_folder), exist_ok=True)
-            node_tree.write(output_folder)
-            print(f"File saved: {output_folder}")
-
-            if serial_number > 2:
-                print(f"Warning: Duplicate filename detected：'{original_filename}'")
+            for node in nodes:
+                elements = {}
+                for child in child_nodes:
+                    element = node.find('.//' + child)
+                    if element is not None:
+                        elements[child] = self.create_valid_filename(element.text)
+                        print(f"Found element: {child}, value: {element.text}")  # 調試信息
+                    else:
+                        print(f"Element {child} not found in node")  # 調試信息
+    
+                # Create filename based on the elements
+                filename_elements = [elements[key] for key in child_nodes if key in elements]
+                filename = split_character.join(filename_elements) + ".xml"
+                original_filename = filename
+                serial_number = 2
+                
+                while filename in self.filename_count:
+                    if self.sequence_var.get() == "前面":
+                        filename = f"{serial_number}{split_character}{original_filename}"
+                    elif self.sequence_var.get() == "後面":
+                        filename = f"{original_filename[:-4]}{split_character}{serial_number}.xml"
+                    else:
+                        filename = original_filename  # 無序號選擇
+                    serial_number += 1
+                
+                self.filename_count[filename] = 1
+                node_tree = ET.ElementTree(node)
+                
+                # Save in the specified folder
+                output_folder = os.path.join(base_folder, filename)
+                os.makedirs(os.path.dirname(output_folder), exist_ok=True)
+                node_tree.write(output_folder)
+                print(f"File saved: {output_folder}")  # 調試信息
+    
+                if serial_number > 2:
+                    print(f"Warning: Duplicate filename detected：'{original_filename}'")
+        except Exception as e:
+            print(f"Error processing file {xml_path}: {e}")
