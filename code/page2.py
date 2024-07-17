@@ -14,8 +14,8 @@ class PositionSettingPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-        self.create_widgets()
-
+        self.create_widgets()        
+        
     def create_widgets(self):
         self.top_right_frame = ctk.CTkFrame(self)
         self.top_right_frame.pack(pady=10, padx=10, fill="x")
@@ -26,7 +26,7 @@ class PositionSettingPage(ctk.CTkFrame):
         self.path_before_entry = self.create_path_selector(self.top_right_frame, 0, "Before 資料夾:", 400, "Browse", self.select_folder)
         self.path_after_entry = self.create_path_selector(self.top_right_frame, 1, "After 資料夾:", 400, "Browse", self.select_folder)
         self.report_output_entry = self.create_path_selector(self.top_right_frame, 2, "報告產出資料夾：", 400, "Browse", self.select_folder)
-        
+       
         save_button = ctk.CTkButton(self.top_right_frame, text="儲存", command=self.save_path, width=100)
         save_button.grid(row=3, column=2, columnspan=3, pady=20, padx=20)
 
