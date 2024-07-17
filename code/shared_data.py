@@ -1,11 +1,12 @@
 import tkinter as tk
 
-before_path = tk.StringVar()
-after_path = tk.StringVar()
-report_output_path = tk.StringVar()
+# 這些變數應在主窗口創建後初始化
+before_path = None
+after_path = None
+report_output_path = None
 
 def init_shared_vars():
     global before_path, after_path, report_output_path
-    before_path.set("Before")  # 預設值，可以根據實際情況修改
-    after_path.set("After")    # 預設值，可以根據實際情況修改
-    report_output_path.set("ReportOutput")  # 預設值，可以根據實際情況修改
+    before_path = tk.StringVar()
+    after_path = tk.StringVar()
+    report_output_path = tk.StringVar()
