@@ -1,0 +1,13 @@
+<book id="1" genre="fiction">
+			<title>Book Title One</title>
+			<author>
+				<name>Author One</name>
+				<birthdate>1980-01-01</birthdate>
+			</author>
+			<summary>This is a brief summary of the first book.</summary>
+			<publish>
+				<year>2020</year>
+				<publisher>Publisher One</publisher>
+			</publish>
+		</book>
+		

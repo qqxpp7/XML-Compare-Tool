@@ -14,7 +14,7 @@ class XMLSplitPage(ctk.CTkFrame):
         self.file_path = None
         self.all_file_path = None
         self.folder_path = None
-        self.child_nodes = set()
+        self.child_nodes = list()
         self.filename_count = {}
         self.create_widgets()
 
@@ -77,11 +77,11 @@ class XMLSplitPage(ctk.CTkFrame):
         中間區域的右邊會展示所選擇的key視窗
         ''' 
         
-        self.add_button = ctk.CTkButton(self.rig_middle_right_frame, text="+", command=self.add_child_node)
-        self.add_button.pack(side=tk.LEFT, pady=5)
+        self.add_button = ctk.CTkButton(self.rig_middle_right_frame, text="+",width=80,height=30, command=self.add_child_node)
+        self.add_button.pack(side=tk.LEFT, pady=5,padx=5)
 
-        self.remove_button = ctk.CTkButton(self.rig_middle_right_frame, text="-", command=self.remove_child_node)
-        self.remove_button.pack(side=tk.LEFT, pady=5)
+        self.remove_button = ctk.CTkButton(self.rig_middle_right_frame, text="-",width=80,height=30, command=self.remove_child_node)
+        self.remove_button.pack(side=tk.LEFT,pady=5,padx=5)
 
         #右下
         self.split_element_entry = self.default_input(self.bottom_right_frame, 1, "拆分Element：", 400, "book")
@@ -153,7 +153,10 @@ class XMLSplitPage(ctk.CTkFrame):
     def on_dropdown_select(self, *args):
         self.before_path = shared_data.before_path.get()
         self.after_path = shared_data.after_path.get()
-        # print(self.before_path,"%", self.after_path)
+        
+        self.option_listbox.delete(0, tk.END)
+        self.child_nodes.clear()
+        
         selected_option = self.selected_option.get()  # 根據選擇的選項來設置資料夾路徑
         if selected_option == "All":
             self.folder_path = [self.before_path, self.after_path]  # 使用列表來存儲多個路徑   
@@ -188,29 +191,31 @@ class XMLSplitPage(ctk.CTkFrame):
         self.display_xml_content()
 
     def populate_all_nodes_list(self):
-        # all_possible_nodes = {}
-        for child in self.root_element.iter():
-            print(child.tag)
+        """
+        先刪除之前的右中左的all_nodes_listbox
+        再讀取xml，並根據順序 insert tag to all_possible_nodes , 去重
+        **如果xml有出現重複的tag，可能也會去掉
+        """
+        self.all_nodes_listbox.delete(0, tk.END)
         
-        all_possible_nodes = {child.tag for child in self.root_element.iter()}
-        print(all_possible_nodes)
+        all_possible_nodes = []
+        for child in self.root_element.iter():
+            if child.tag not in all_possible_nodes:
+                all_possible_nodes.append(child.tag)        
+   
         for node in all_possible_nodes:
-            self.all_nodes_listbox.insert(tk.END, node)    
-    '''
-    透過display_xml_content進行呼叫，傳入剛剛xml檔案的路徑，分析檔案的樹架構
-    '''        
+            self.all_nodes_listbox.insert(tk.END, node)            
     
     def display_xml_content(self, file_paths=None):
+        """
+        首先刪除之前的內容，並且以階層形式展現xml
+        """
         self.text_area.delete('1.0', tk.END)
-        # self.load_xml_content(file_paths)
-        print("file_paths?????")
-        print(file_paths)
         
         def display_node(node, indent=""):
-                if node.tag in self.child_nodes or not self.child_nodes:
-                    self.text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else ''}\n")               
-                for child in node:
-                    display_node(child, indent + "    ")
+            self.text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip()}\n")               
+            for child in node:
+                display_node(child, indent + "    ")
 
         display_node(self.root_element)
 
@@ -230,27 +235,53 @@ class XMLSplitPage(ctk.CTkFrame):
     #         self.update_option_list()
 
     def add_child_node(self):
-        if len(self.child_nodes) > 5:
-            messagebox.showinfo("Error", "You can select no more than 5 items.")
-            return
+        '''
+        在左邊all_nodes_listbox選中要的tag，點下+會變黃色
+        右邊的option_listbox會新增tag
+        最多選5個tag
+        '''
+        selection = self.all_nodes_listbox.curselection()
+        if selection:
+            index = selection[0]
+            node = self.all_nodes_listbox.get(index)
+                           
+            if len(self.child_nodes) > 4:
+                messagebox.showinfo("Error", "You can select no more than 5 items.")
+                return
+            else:
+                self.child_nodes.append(node)
+                self.all_nodes_listbox.itemconfig(index, {'bg':'yellow'})
+                
         self.update_option_list()
 
     def remove_child_node(self):
+        '''
+        在右邊option_listbox選中要刪除的tag，點下-option_listbox會減少tag       
+        items會展示所有的tag，透過node得知目前在右邊選中的tag
+        在左邊all_nodes_listbox會變回白色
+        '''
         selection = self.option_listbox.curselection()
         if selection:
             index = selection[0]
             node = self.option_listbox.get(index)
-            self.child_nodes.discard(node)
-            self.option_listbox.delete(index)
+            self.child_nodes.remove(node)
+            
+            items = self.all_nodes_listbox.get(0, tk.END)
+            config_index = items.index(node)
+            self.all_nodes_listbox.itemconfig(config_index, {'bg':'white'})
         self.update_option_list()
 
     def update_option_list(self):
+        '''
+        更新右邊的option_list，首先會先刪除畫面
+        
+        '''
         self.option_listbox.delete(0, tk.END)
         print("--------update option list--------")
         for node in self.child_nodes:
             self.option_listbox.insert(tk.END, node)
             print(node)
-        self.display_xml_content([self.file_path])
+        # self.display_xml_content([self.file_path])
 
     def split_xml(self):
         if not self.child_nodes:
@@ -258,7 +289,7 @@ class XMLSplitPage(ctk.CTkFrame):
             return
         
         selected_option = self.selected_option.get()  # 根據選擇的選項來設置資料夾路徑
-        
+        self.filename_count.clear()
         if selected_option == "All":
             # 確保新資料夾已經創建
             before_new_folder = os.path.join(self.before_path, "before_split")
@@ -270,14 +301,22 @@ class XMLSplitPage(ctk.CTkFrame):
             for file in self.all_file_path:
                 print('file name before:', file)
                 self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), before_new_folder)
-                
+            
+            has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
+            if has_value_greater_than_one:
+                messagebox.showinfo("Warning"," Duplicate filename detected in Before")     
+            
             # after
+            self.filename_count.clear()
             self.all_file_path = []
             self.all_file_path = self.load_xml_files(self.folder_path[1]) 
             for file in self.all_file_path:
                 print('file name after:', file)
                 self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
-        
+            
+            has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
+            if has_value_greater_than_one:
+                messagebox.showinfo("Warning"," Duplicate filename detected in After")
         
         elif selected_option == "Before":
             before_new_folder = os.path.join(self.before_path, "before_split")
@@ -285,7 +324,10 @@ class XMLSplitPage(ctk.CTkFrame):
             self.all_file_path = self.load_xml_files(*self.folder_path)  
             for file in self.all_file_path:
                 self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), before_new_folder)
-                
+            
+            has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
+            if has_value_greater_than_one:
+                messagebox.showinfo("Warning"," Duplicate filename detected in Before")    
                 
         elif selected_option == "After":
             after_new_folder = os.path.join(self.after_path, "after_split")
@@ -293,31 +335,29 @@ class XMLSplitPage(ctk.CTkFrame):
             self.all_file_path = self.load_xml_files(*self.folder_path)  
             for file in self.all_file_path:
                 self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
+            
+            has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
+            if has_value_greater_than_one:
+                messagebox.showinfo("Warning"," Duplicate filename detected in After")
         else:
             messagebox.showinfo("Error", "Please select at least one option.")
-            
+        
         messagebox.showinfo("Success", "XML split successfully!")
             
     def save_books_from_xml(self, xml_path, node_name, child_nodes, split_character, base_folder):
         try:
-            print(f"Loading XML file: {xml_path}")  # 調試信息
             # Load the XML file
             tree = ET.parse(xml_path)
             root = tree.getroot()
-            
-            print(f"Root tag: {root.tag}, searching for node: {node_name}")  # 調試信息
+
             nodes = [root] if root.tag == node_name else root.findall('.//' + node_name)
-            print(f"Found {len(nodes)} nodes")  # 調試信息
             
             for node in nodes:
                 elements = {}
                 for child in child_nodes:
                     element = node.find('.//' + child)
                     if element is not None:
-                        elements[child] = self.create_valid_filename(element.text)
-                        print(f"Found element: {child}, value: {element.text}")  # 調試信息
-                    else:
-                        print(f"Element {child} not found in node")  # 調試信息
+                        elements[child] = self.create_valid_filename(element.text)                                            
     
                 # Create filename based on the elements
                 filename_elements = [elements[key] for key in child_nodes if key in elements]
@@ -331,8 +371,7 @@ class XMLSplitPage(ctk.CTkFrame):
                     self.filename_count[original_filename] = 1                
                 
                 #當出現次數=1維持原檔名
-                if self.filename_count[original_filename] > 1:
-                    messagebox.showinfo(f"Warning: Duplicate filename detected：'{original_filename}'")                
+                if self.filename_count[original_filename] > 1:                                    
                     if self.sequence_var.get() == "前面":
                         filename = f"{self.filename_count[original_filename]}{split_character}{original_filename}.xml"
                     elif self.sequence_var.get() == "後面":

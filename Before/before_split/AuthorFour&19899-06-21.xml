@@ -1,0 +1,13 @@
+<book id="4" genre="fiction">
+			<title>Book Title Four</title>
+			<author>
+				<name>Author Four</name>
+				<birthdate>19899-06-21</birthdate>
+			</author>
+			<summary>This is a brief summary of the fourth book.</summary>
+			<publish>
+				<year>2023</year>
+				<publisher>Publisher Four</publisher>
+			</publish>
+		</book>
+		
