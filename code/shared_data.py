@@ -1,6 +1,8 @@
 import tkinter as tk
+import json
+import os
 
-# 這些變數應在主窗口創建後初始化
+# 全域變數的宣告
 before_path = None
 after_path = None
 report_output_path = None
@@ -10,3 +12,21 @@ def init_shared_vars():
     before_path = tk.StringVar()
     after_path = tk.StringVar()
     report_output_path = tk.StringVar()
+    load_vars_from_file()  # 初始化時從檔案加載變數
+
+def save_vars_to_file():
+    data = {
+        "before_path": before_path.get(),
+        "after_path": after_path.get(),
+        "report_output_path": report_output_path.get()
+    }
+    with open('shared_data.json', 'w') as file:
+        json.dump(data, file)
+
+def load_vars_from_file():
+    if os.path.exists('shared_data.json'):
+        with open('shared_data.json', 'r') as file:
+            data = json.load(file)
+            before_path.set(data.get("before_path", ""))
+            after_path.set(data.get("after_path", ""))
+            report_output_path.set(data.get("report_output_path", ""))

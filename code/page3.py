@@ -16,7 +16,7 @@ class XMLSplitPage(ctk.CTkFrame):
         self.folder_path = None
         self.child_nodes = set()
         self.filename_count = {}
-        self.create_widgets()        
+        self.create_widgets()
 
     def create_widgets(self):
         self.top_right_frame = ctk.CTkFrame(self)
@@ -58,7 +58,7 @@ class XMLSplitPage(ctk.CTkFrame):
         #右中左
         self.all_nodes_listbox = tk.Listbox(self.left_middle_right_frame, selectmode=tk.SINGLE)
         self.all_nodes_listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        self.all_nodes_listbox.bind('<<ListboxSelect>>', self.on_node_select)
+        # self.all_nodes_listbox.bind('<<ListboxSelect>>', self.on_node_select)
         '''
         中間區域的左邊是選擇key element的小視窗，所有key element都會秀出來
         ''' 
@@ -168,13 +168,11 @@ class XMLSplitPage(ctk.CTkFrame):
         
         if self.folder_path:
             self.file_path = self.random_load_xml_file(*self.folder_path)
-            self.all_file_path = self.load_xml_files(*self.folder_path)        
         if self.file_path:
             self.load_xml_content([self.file_path])
             # self.display_xml_content([self.file_path])
             print("******on dropdown select*****")
             print(self.file_path)
-            print(self.all_file_path)
     '''
     選擇All的時候會隨機選擇before或after路徑，選好資料夾後會跳到load_xml_file隨機選擇一個檔案
     選好檔案路徑後再透過display_xml_content展示檔案內容
@@ -190,7 +188,12 @@ class XMLSplitPage(ctk.CTkFrame):
         self.display_xml_content()
 
     def populate_all_nodes_list(self):
+        # all_possible_nodes = {}
+        for child in self.root_element.iter():
+            print(child.tag)
+        
         all_possible_nodes = {child.tag for child in self.root_element.iter()}
+        print(all_possible_nodes)
         for node in all_possible_nodes:
             self.all_nodes_listbox.insert(tk.END, node)    
     '''
@@ -211,19 +214,20 @@ class XMLSplitPage(ctk.CTkFrame):
 
         display_node(self.root_element)
 
-    def on_node_select(self, event):
-        widget = event.widget
-        selection = widget.curselection()
-        if selection:
-            index = selection[0]
-            node = widget.get(index)
-            if node in self.child_nodes:
-                self.child_nodes.remove(node)
-                widget.itemconfig(index, {'bg':'white'})
-            else:
-                self.child_nodes.add(node)
-                widget.itemconfig(index, {'bg':'yellow'})
-            self.update_option_list()
+    # def on_node_select(self, event):
+    #     widget = event.widget
+    #     selection = widget.curselection()
+    #     if selection:
+    #         index = selection[0]
+    #         node = widget.get(index)
+    #         #node存的是我沒選中的
+    #         if node in self.child_nodes:
+    #             # self.child_nodes.remove(node)
+    #             widget.itemconfig(index, {'bg':'white'})
+    #         else:
+    #             # self.child_nodes.add(node)
+    #             widget.itemconfig(index, {'bg':'yellow'})
+    #         self.update_option_list()
 
     def add_child_node(self):
         if len(self.child_nodes) > 5:
@@ -242,9 +246,10 @@ class XMLSplitPage(ctk.CTkFrame):
 
     def update_option_list(self):
         self.option_listbox.delete(0, tk.END)
+        print("--------update option list--------")
         for node in self.child_nodes:
             self.option_listbox.insert(tk.END, node)
-        print("--------update option list--------")
+            print(node)
         self.display_xml_content([self.file_path])
 
     def split_xml(self):
@@ -252,24 +257,40 @@ class XMLSplitPage(ctk.CTkFrame):
             messagebox.showinfo("Error", "Please select at least one child node.")
             return
         
-        before_new_folder = os.path.join(self.before_path, "before_split")
-        after_new_folder = os.path.join(self.after_path, "after_split")
-         
-        # 確保新資料夾已經創建
-        os.makedirs(before_new_folder, exist_ok=True)
-        os.makedirs(after_new_folder, exist_ok=True)
-         
-        print("All file paths:", self.all_file_path)  # 調試信息
-        
         selected_option = self.selected_option.get()  # 根據選擇的選項來設置資料夾路徑
+        
         if selected_option == "All":
+            # 確保新資料夾已經創建
+            before_new_folder = os.path.join(self.before_path, "before_split")
+            after_new_folder = os.path.join(self.after_path, "after_split")
+            os.makedirs(before_new_folder, exist_ok=True)
+            os.makedirs(after_new_folder, exist_ok=True)
+            # before
+            self.all_file_path = self.load_xml_files(self.folder_path[0])
             for file in self.all_file_path:
-                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), shared_data.before_path)
-                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), shared_data.after_path)
+                print('file name before:', file)
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), before_new_folder)
+                
+            # after
+            self.all_file_path = []
+            self.all_file_path = self.load_xml_files(self.folder_path[1]) 
+            for file in self.all_file_path:
+                print('file name after:', file)
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
+        
+        
         elif selected_option == "Before":
+            before_new_folder = os.path.join(self.before_path, "before_split")
+            os.makedirs(before_new_folder, exist_ok=True)
+            self.all_file_path = self.load_xml_files(*self.folder_path)  
             for file in self.all_file_path:
                 self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), before_new_folder)
+                
+                
         elif selected_option == "After":
+            after_new_folder = os.path.join(self.after_path, "after_split")
+            os.makedirs(after_new_folder, exist_ok=True)
+            self.all_file_path = self.load_xml_files(*self.folder_path)  
             for file in self.all_file_path:
                 self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
         else:
@@ -302,27 +323,32 @@ class XMLSplitPage(ctk.CTkFrame):
                 filename_elements = [elements[key] for key in child_nodes if key in elements]
                 filename = split_character.join(filename_elements) + ".xml"
                 original_filename = filename
-                serial_number = 2
                 
-                while filename in self.filename_count:
+                #計算檔案出現次數
+                if original_filename in self.filename_count:
+                    self.filename_count[original_filename] += 1
+                else:
+                    self.filename_count[original_filename] = 1                
+                
+                #當出現次數=1維持原檔名
+                if self.filename_count[original_filename] > 1:
+                    messagebox.showinfo(f"Warning: Duplicate filename detected：'{original_filename}'")                
                     if self.sequence_var.get() == "前面":
-                        filename = f"{serial_number}{split_character}{original_filename}"
+                        filename = f"{self.filename_count[original_filename]}{split_character}{original_filename}.xml"
                     elif self.sequence_var.get() == "後面":
-                        filename = f"{original_filename[:-4]}{split_character}{serial_number}.xml"
+                        filename = f"{original_filename[:-4]}{split_character}{self.filename_count[original_filename]}.xml"
                     else:
                         filename = original_filename  # 無序號選擇
-                    serial_number += 1
+                else:
+                    filename = original_filename
                 
-                self.filename_count[filename] = 1
                 node_tree = ET.ElementTree(node)
-                
+
                 # Save in the specified folder
                 output_folder = os.path.join(base_folder, filename)
-                os.makedirs(os.path.dirname(output_folder), exist_ok=True)
                 node_tree.write(output_folder)
-                print(f"File saved: {output_folder}")  # 調試信息
+                print(f"File saved: {output_folder}") 
     
-                if serial_number > 2:
-                    print(f"Warning: Duplicate filename detected：'{original_filename}'")
+
         except Exception as e:
             print(f"Error processing file {xml_path}: {e}")

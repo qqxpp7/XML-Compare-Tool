@@ -64,6 +64,9 @@ class PositionSettingPage(ctk.CTkFrame):
         shared_data.after_path.set(self.path_after_entry.get())
         shared_data.report_output_path.set(self.report_output_entry.get())
         messagebox.showinfo("信息", "路徑已保存")
+    '''
+    將設置好的路徑存在全域參數內
+    '''
 
     def default_input(self, frame, row, label_text, entry_width, default_text):
         label = ctk.CTkLabel(frame, text=label_text, anchor="w")
@@ -72,6 +75,9 @@ class PositionSettingPage(ctk.CTkFrame):
         entry.grid(row=row, column=1, sticky="w")
         entry.insert(0, default_text)
         return entry
+    '''
+    有預設輸入值的標籤與輸入框
+    '''
 
     def toggle_button(self, button, var):
         if var.get() == 1:
@@ -99,7 +105,10 @@ class PositionSettingPage(ctk.CTkFrame):
                 new_filename = f"{base}.{extension}"
                 new_file_path = os.path.join(folder_path, new_filename)
                 os.rename(file_path, new_file_path)
-
+    '''
+    轉換資料夾路徑下的所有檔案格式
+    '''
+    
     def execute(self):
         self.attachment_format = self.attachment_format_entry.get()
         
