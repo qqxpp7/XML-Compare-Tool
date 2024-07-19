@@ -27,7 +27,7 @@ class PositionSettingPage(ctk.CTkFrame):
         self.path_after_entry = self.create_path_selector(self.top_right_frame, 1, "After 資料夾:", 400, "Browse", self.select_folder)
         self.report_output_entry = self.create_path_selector(self.top_right_frame, 2, "報告產出資料夾：", 400, "Browse", self.select_folder)
        
-        save_button = ctk.CTkButton(self.top_right_frame, text="儲存", command=self.save_path, width=100)
+        save_button = ctk.CTkButton(self.top_right_frame, text="儲存", command=self.save_path, width=200)
         save_button.grid(row=3, column=2, columnspan=3, pady=20, padx=20)
 
         self.attachment_format_entry = self.default_input(self.bottom_right_frame, 0, "加副檔名：", 400, "xml")
@@ -41,8 +41,8 @@ class PositionSettingPage(ctk.CTkFrame):
         self.add_extension_after_button = self.create_toggle_button(self.bottom_right_frame, "After", 1, 1, 
             lambda: self.on_button_click(self.after_button_var, self.add_extension_after_button))
         
-        ok_button = ctk.CTkButton(self.bottom_right_frame, text="修改", command=self.execute, width=100)
-        ok_button.grid(row=2, column=4, columnspan=2, pady=10, padx=10)
+        format_change_button = ctk.CTkButton(self.bottom_right_frame, text="修改", command=self.format_change, width=200)
+        format_change_button.grid(row=2, column=4, pady=0, padx=10)
 
     def create_path_selector(self, frame, row, label_text, entry_width, button_text, command):
         label = ctk.CTkLabel(frame, text=label_text, anchor="w")
@@ -75,7 +75,7 @@ class PositionSettingPage(ctk.CTkFrame):
         有預設輸入值的標籤與輸入框
         '''
         label = ctk.CTkLabel(frame, text=label_text, anchor="w")
-        label.grid(row=row, column=0, pady=20, padx=20, sticky="w")
+        label.grid(row=row, column=0, pady=30, padx=20, sticky="w")
         entry = ctk.CTkEntry(frame, width=entry_width)
         entry.grid(row=row, column=1, sticky="w")
         entry.insert(0, default_text)
@@ -83,7 +83,7 @@ class PositionSettingPage(ctk.CTkFrame):
 
     def toggle_button(self, button, var):
         if var.get() == 1:
-            button.configure(fg_color="blue")
+            button.configure(fg_color="#4169E1")
         else:
             button.configure(fg_color="gray")
 
@@ -92,8 +92,8 @@ class PositionSettingPage(ctk.CTkFrame):
         self.toggle_button(button, button_var)
 
     def create_toggle_button(self, frame, text, row, column, command):
-        button = ctk.CTkButton(frame, text=text, command=command, width=100, fg_color="blue")
-        button.grid(row=row, column=column, pady=30, padx=30, sticky="w")
+        button = ctk.CTkButton(frame, text=text, command=command, width=100, fg_color="#4169E1")
+        button.grid(row=row, column=column, pady=10, padx=20, sticky="w")
         return button
 
     def add_extension_to_files(self, folder_path, extension):
@@ -111,7 +111,7 @@ class PositionSettingPage(ctk.CTkFrame):
                 new_file_path = os.path.join(folder_path, new_filename)
                 os.rename(file_path, new_file_path)
     
-    def execute(self):
+    def format_change(self):
         self.attachment_format = self.attachment_format_entry.get()
         
         if self.before_button_var.get() == 1:

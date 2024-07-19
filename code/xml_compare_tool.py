@@ -13,7 +13,7 @@ class XMLCompareTool:
     def __init__(self, root):
         self.root = root
         self.root.title("XML Compare Tool")
-        self.root.geometry("1000x600")
+        self.root.geometry("1100x650")
         
         self.selected_function = tk.StringVar(value="01 位置設定")
         self.function_buttons = {}

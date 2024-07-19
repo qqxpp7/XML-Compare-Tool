@@ -3,6 +3,7 @@ import re
 import random
 import tkinter as tk
 import customtkinter as ctk
+from datetime import datetime
 import xml.etree.ElementTree as ET
 from tkinter import ttk, messagebox, scrolledtext
 import shared_data 
@@ -19,6 +20,9 @@ class XMLSplitPage(ctk.CTkFrame):
         self.create_widgets()
 
     def create_widgets(self):
+        '''
+        右邊畫面分為上、中、下三個區域
+        ''' 
         self.top_right_frame = ctk.CTkFrame(self)
         self.top_right_frame.pack(pady=5, padx=10, fill="x")
 
@@ -27,13 +31,13 @@ class XMLSplitPage(ctk.CTkFrame):
         
         self.bottom_right_frame = ctk.CTkFrame(self)
         self.bottom_right_frame.pack(pady=5, padx=10, fill="x")
-        '''
-        右邊畫面分為上、中、下三個區域
-        ''' 
+        
         
         #右中左-中中-中右
-        self.mylabel = tk.Label(self.middle_right_frame,
-                                bg='lightblue', text='選擇命名的key')
+        '''
+        中間區域分三個小視窗
+        ''' 
+        self.mylabel = tk.Label(self.middle_right_frame, bg='#87CEFA', text='選擇命名的key')
         self.mylabel.pack(fill="both",side=tk.TOP) 
         
         self.left_middle_right_frame = ctk.CTkFrame(self.middle_right_frame)
@@ -44,33 +48,38 @@ class XMLSplitPage(ctk.CTkFrame):
         
         self.rig_middle_right_frame = ctk.CTkFrame(self.middle_right_frame)
         self.rig_middle_right_frame.pack(pady=5, padx=5, side="left", fill="both", expand=True)
-        '''
-        中間區域是展示檔案element、text的部分，也有分三個小視窗
-        ''' 
         
+        '''
+        上區域會選擇從"All", "Before", "After"進行檔案分割
+        ''' 
         self.selected_option = tk.StringVar()
         self.selected_option.set("Select Folder")
         self.options = ["All", "Before", "After"]
         self.create_combobox()
-        '''
-        上區域會選擇從"All", "Before", "After"進行檔案分割
-        ''' 
-        
+               
         self.ok_button = ctk.CTkButton(self.top_right_frame, text="拆分", command=self.split_xml)
         self.ok_button.grid(row=0, column=3, pady=10, padx=10, sticky="w")
 
+
         #右中左
+        '''
+        中間區域的左邊
+        選擇key element的小視窗，所有key element都會在這邊
+        ''' 
         self.scrollbar = tk.Scrollbar(self.left_middle_right_frame) 
         self.scrollbar.pack(side='right', fill='y')        
         
         self.all_nodes_listbox = tk.Listbox(self.left_middle_right_frame, selectmode=tk.SINGLE, yscrollcommand=self.scrollbar.set, font=("Helvetica",14))
         self.all_nodes_listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         # self.all_nodes_listbox.bind('<<ListboxSelect>>', self.on_node_select)
-        '''
-        中間區域的左邊是選擇key element的小視窗，所有key element都會秀出來
-        ''' 
+        
                   
         # 右中間框架
+        '''
+        中間區域的中間
+        會秀出檔案的Element及Text
+        wrap=tk.NONE 禁用自動換行
+        '''
         self.text_area = scrolledtext.ScrolledText(self.mid_middle_right_frame, wrap=tk.NONE, width=50, height=20, font=("Helvetica",14))
         self.text_area.pack(fill=tk.BOTH, expand=True)
         
@@ -79,52 +88,46 @@ class XMLSplitPage(ctk.CTkFrame):
         self.text_area['xscrollcommand'] = self.x_scrollbar.set
         #Lock the text area to read-only
         self.text_area.bind("<Key>", lambda e: "break")
-        '''
-        中間區域的中間會秀出檔案的element及text
-        wrap=tk.NONE 以禁用自動換行，使其可以左右滾動
-        ''' 
+         
         
         #右中右
-
+        '''
+        中間區域的右邊
+        展示所選擇的key視窗，以及新增(+)與刪除(-)的按鈕
+        ''' 
         self.option_listbox = tk.Listbox(self.rig_middle_right_frame, font=("Helvetica",14))
         self.option_listbox.pack(fill=tk.BOTH, expand=True)
-        '''
-        中間區域的右邊會展示所選擇的key視窗
-        ''' 
-        
+               
         self.add_button = ctk.CTkButton(self.rig_middle_right_frame, text="+",width=80,height=30, command=self.add_child_node)
         self.add_button.pack(side=tk.LEFT, pady=5,padx=5)
 
         self.remove_button = ctk.CTkButton(self.rig_middle_right_frame, text="-",width=80,height=30, command=self.remove_child_node)
         self.remove_button.pack(side=tk.LEFT,pady=5,padx=5)
 
+
         #右下
-        self.split_element_entry = self.default_input(self.bottom_right_frame, 1, "拆分Element：", 400, "row")
+        '''
+        下面區域
+        有預設值的拆分Element跟分隔符號的輸入框
+        流水號標籤，共有三個選項
+        '''
+        self.split_element_entry = self.default_input(self.bottom_right_frame, 1, "拆分Element：", 400, "")
         self.delimiter_entry = self.default_input(self.bottom_right_frame, 2, "分隔符號：", 50, "_")
-        '''
-        下面區域有預設值的拆分Element跟分隔符號的輸入框
-        '''
-        
-        # 流水號標籤
+             
+
         self.sequence_label = ctk.CTkLabel(self.bottom_right_frame, text="流水號：")
         self.sequence_label.grid(row=3, column=0, pady=10, padx=50, sticky="w")       
-        # 流水號選項
         self.sequence_var = tk.StringVar(value="無")
-        self.sequence_options = ctk.CTkSegmentedButton(
-            master=self.bottom_right_frame,
-            values=["前面", "後面", "無"],
-            variable=self.sequence_var,)        
+        self.sequence_options = ctk.CTkSegmentedButton(master=self.bottom_right_frame,
+             values=["前面", "後面", "無"],variable=self.sequence_var,)        
         self.sequence_options.grid(row=3, column=1, pady=10, padx=10, sticky="w")
-        '''
-        下面區域還有是否需要流水號的選項
-        '''
+        
 
     def create_combobox(self):
         '''
         上面區域選擇從"All", "Before", "After"進行檔案分割的combobox建立
         ''' 
-        combobox = ttk.Combobox(self.top_right_frame,
-                                textvariable=self.selected_option,
+        combobox = ttk.Combobox(self.top_right_frame, textvariable=self.selected_option,
                                 values=self.options, state="readonly")
         combobox.grid(row=0, column=0, pady=10, padx=30)
         self.selected_option.trace("w", self.on_dropdown_select)
@@ -138,11 +141,13 @@ class XMLSplitPage(ctk.CTkFrame):
         entry.insert(0, default_text) # 預設 xml
         return entry
 
+
     def create_valid_filename(self, text):
         '''
         使用正則表達式移除或替換檔案名中的非法字符
         '''
         return re.sub(r'[^\w\-_\.]', '', text)
+ 
     
     def random_load_xml_file(self, *paths):
         '''
@@ -168,7 +173,6 @@ class XMLSplitPage(ctk.CTkFrame):
         return files
 
     
-
     def on_dropdown_select(self, *args):
         '''
         選擇All的時候會隨機選擇before或after路徑，選好資料夾後會跳到load_xml_file隨機選擇一個檔案
@@ -198,8 +202,7 @@ class XMLSplitPage(ctk.CTkFrame):
             self.load_xml_content([self.file_path])
             # self.display_xml_content([self.file_path])
 
-    
-    
+        
     def load_xml_content(self, file_paths):
         if not file_paths:
             return
@@ -208,6 +211,9 @@ class XMLSplitPage(ctk.CTkFrame):
         self.root_element = tree.getroot()
         self.populate_all_nodes_list()
         self.display_xml_content()
+        self.split_element_entry.delete(0, tk.END)
+        self.split_element_entry.insert(0, self.all_possible_nodes[1])
+
 
     def populate_all_nodes_list(self):
         """
@@ -217,13 +223,14 @@ class XMLSplitPage(ctk.CTkFrame):
         """
         self.all_nodes_listbox.delete(0, tk.END)
         
-        all_possible_nodes = []
+        self.all_possible_nodes = []
         for child in self.root_element.iter():
-            if child.tag not in all_possible_nodes:
-                all_possible_nodes.append(child.tag)        
-   
-        for node in all_possible_nodes:
+            if child.tag not in self.all_possible_nodes:
+                self.all_possible_nodes.append(child.tag)        
+                
+        for node in self.all_possible_nodes:
             self.all_nodes_listbox.insert(tk.END, node)            
+    
     
     def display_xml_content(self, file_paths=None):
         """
@@ -236,23 +243,8 @@ class XMLSplitPage(ctk.CTkFrame):
             for child in node:
                 display_node(child, indent + "    ")
         
-        print(self.root_element)
         display_node(self.root_element)
 
-    # def on_node_select(self, event):
-    #     widget = event.widget
-    #     selection = widget.curselection()
-    #     if selection:
-    #         index = selection[0]
-    #         node = widget.get(index)
-    #         #node存的是我沒選中的
-    #         if node in self.child_nodes:
-    #             # self.child_nodes.remove(node)
-    #             widget.itemconfig(index, {'bg':'white'})
-    #         else:
-    #             # self.child_nodes.add(node)
-    #             widget.itemconfig(index, {'bg':'yellow'})
-    #         self.update_option_list()
 
     def add_child_node(self):
         '''
@@ -274,6 +266,7 @@ class XMLSplitPage(ctk.CTkFrame):
                 
         self.update_option_list()
 
+
     def remove_child_node(self):
         '''
         在右邊option_listbox選中要刪除的tag，點下-option_listbox會減少tag       
@@ -291,15 +284,16 @@ class XMLSplitPage(ctk.CTkFrame):
             self.all_nodes_listbox.itemconfig(config_index, {'bg':'white'})
         self.update_option_list()
 
+
     def update_option_list(self):
         '''
         更新右邊的option_list，首先會先刪除畫面
-        
+        將node一行一行插入
         '''
         self.option_listbox.delete(0, tk.END)
         for node in self.child_nodes:
             self.option_listbox.insert(tk.END, node)
-        # self.display_xml_content([self.file_path])
+
 
     def split_xml(self):
         if not self.child_nodes:
@@ -308,6 +302,23 @@ class XMLSplitPage(ctk.CTkFrame):
         
         selected_option = self.selected_option.get()  # 根據選擇的選項來設置資料夾路徑
         self.filename_count.clear()
+        
+        # 創建進度條視窗
+        progress_window = tk.Toplevel()
+        progress_window.title("Processing")
+        progress_label = tk.Label(progress_window, text="Processing, please wait...")
+        progress_label.pack(pady=10)
+        progress_bar = ttk.Progressbar(progress_window)
+        progress_bar.pack(pady=10)
+        
+        
+        self.all_file_path = self.load_xml_files(self.folder_path[0])
+        total_files = len(self.all_file_path)  # 計算Before文件數量
+        progress_bar['maximum'] = total_files * 2
+        
+        def update_progress():
+            progress_window.update_idletasks()
+            
         if selected_option == "All":
             # 確保新資料夾已經創建
             before_new_folder = os.path.join(self.before_path, "before_split")
@@ -317,51 +328,73 @@ class XMLSplitPage(ctk.CTkFrame):
                         
             # before
             self.all_file_path = self.load_xml_files(self.folder_path[0])
-            for file in self.all_file_path:
-                print('file name before:', file)
+            for i, file in enumerate(self.all_file_path):
                 self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), before_new_folder)
-            
+                progress_bar['value'] = i + 1
+                update_progress()  
+                
             has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
             if has_value_greater_than_one:
                 messagebox.showinfo("警告"," Duplicate filename detected in Before")     
             
             # after
             self.filename_count.clear()
-            self.all_file_path = []
             self.all_file_path = self.load_xml_files(self.folder_path[1]) 
-            for file in self.all_file_path:
-                print('file name after:', file)
-                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
             
+            for i, file in enumerate(self.all_file_path):
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
+                progress_bar['value'] = i + 1 + total_files
+                update_progress()
+                
             has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
             if has_value_greater_than_one:
                 messagebox.showinfo("警告"," Duplicate filename detected in After")
-        
+                
+            # 打開資料夾
+            messagebox.showinfo("Success", "XML split successfully!")
+            if os.name == 'nt':
+                    os.startfile(before_new_folder)
+                    os.startfile(after_new_folder)
+                    
         elif selected_option == "Before":
             before_new_folder = os.path.join(self.before_path, "before_split")
             os.makedirs(before_new_folder, exist_ok=True)
             self.all_file_path = self.load_xml_files(*self.folder_path)  
-            for file in self.all_file_path:
+            for i, file in enumerate(self.all_file_path):
                 self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), before_new_folder)
-            
+                progress_bar['value'] = i + 1
+                update_progress()
+                
             has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
             if has_value_greater_than_one:
                 messagebox.showinfo("警告"," Duplicate filename detected in Before")    
-                
+            
+            messagebox.showinfo("Success", "XML split successfully!")
+            if os.name == 'nt':  # For Windows
+                os.startfile(before_new_folder)   
+            self.print_file(self.filename_count, 'before', self.split_element_entry.get(), self.child_nodes, self.delimiter_entry.get(), self.sequence_var.get())
+            
         elif selected_option == "After":
             after_new_folder = os.path.join(self.after_path, "after_split")
             os.makedirs(after_new_folder, exist_ok=True)
             self.all_file_path = self.load_xml_files(*self.folder_path)  
-            for file in self.all_file_path:
+            for i, file in enumerate(self.all_file_path):
                 self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
-            
+                progress_bar['value'] = i + 1
+                update_progress()
+                
             has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
             if has_value_greater_than_one:
                 messagebox.showinfo("警告"," Duplicate filename detected in After")
+            
+            messagebox.showinfo("Success", "XML split successfully!")
+            if os.name == 'nt':  # For Windows
+                os.startfile(after_new_folder)
         else:
             messagebox.showinfo("Error", "Please select at least one option.")
         
-        messagebox.showinfo("Success", "XML split successfully!")
+        progress_window.destroy()
+
             
     def save_books_from_xml(self, xml_path, node_name, child_nodes, split_character, base_folder):
         try:
@@ -405,8 +438,34 @@ class XMLSplitPage(ctk.CTkFrame):
                 # Save in the specified folder
                 output_folder = os.path.join(base_folder, filename)
                 node_tree.write(output_folder, encoding="UTF-8")
-                print(f"File saved: {output_folder}") 
     
 
         except Exception as e:
             print(f"Error processing file {xml_path}: {e}")
+        
+    def print_file(self, count_dict, file_name, split_element, child_nodes, delimiter, sequence ):
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        repeat_new_folder = os.path.join(shared_data.report_output_path.get(), "repeat_file")
+        os.makedirs(repeat_new_folder, exist_ok=True)
+        # 生成帶當前時間的文件名
+        file_path = os.path.join(repeat_new_folder, f"repeat_file_{current_time}.txt")
+        
+        with open(file_path, 'a') as file:
+                                
+            file.write(f"--------------------Header ---------------------\n")
+            file.write(f"執行時間:{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            file.write(f"執行檔案:{file_name}\n")                    
+            file.write(f"--------------------Input Parameter ---------------------\n")           
+            file.write(f"拆分Element:{split_element}\n")
+            file.write(f"命名Key:{child_nodes}\n")
+            file.write(f"分隔符號:{delimiter}\n")
+            file.write(f"流水號選擇:{sequence}\n")
+            file.write(f"--------------------內容 ---------------------\n")
+            
+            for key, value in count_dict.items():
+                if value >= 2:
+                     # 將資料寫入文本文件
+                    file.write(f"{key} appears {value} times.\n")
+                        
+            if os.name == 'nt':
+                os.startfile(repeat_new_folder)

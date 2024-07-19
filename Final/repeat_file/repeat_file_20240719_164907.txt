@@ -1,0 +1,13 @@
+--------------------Header ---------------------
+執行時間:2024-07-19 16:49:07
+執行檔案:before
+--------------------Input Parameter ---------------------
+拆分Element:book
+命名Key:['name']
+分隔符號:_
+流水號選擇:無
+--------------------內容 ---------------------
+AuthorOne.xml appears 2 times.
+AuthorTwo.xml appears 2 times.
+AuthorThree.xml appears 2 times.
+AuthorFour.xml appears 2 times.
