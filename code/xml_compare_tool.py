@@ -84,7 +84,7 @@ class XMLCompareTool:
             "Copy 資料": "CopyDataPage",
             "Element 分割": "ElementSplitPage"
         }
-        return mapping.get(function, "PositionSettingPage")        
+        return mapping.get(function, "PositionSettingPage")      
 
 if __name__ == "__main__":
     root = ctk.CTk()  # 創建主窗口

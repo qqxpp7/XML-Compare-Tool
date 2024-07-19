@@ -26,12 +26,16 @@ class XMLSplitPage(ctk.CTkFrame):
         self.middle_right_frame.pack(pady=5, padx=10, fill="both", expand=True)
         
         self.bottom_right_frame = ctk.CTkFrame(self)
-        self.bottom_right_frame.pack(pady=5, padx=10, fill="both", expand=True)
+        self.bottom_right_frame.pack(pady=5, padx=10, fill="x")
         '''
         右邊畫面分為上、中、下三個區域
         ''' 
         
         #右中左-中中-中右
+        self.mylabel = tk.Label(self.middle_right_frame,
+                                bg='lightblue', text='選擇命名的key')
+        self.mylabel.pack(fill="both",side=tk.TOP) 
+        
         self.left_middle_right_frame = ctk.CTkFrame(self.middle_right_frame)
         self.left_middle_right_frame.pack(pady=5, padx=5, side="left", fill="both", expand=True)
         
@@ -56,22 +60,33 @@ class XMLSplitPage(ctk.CTkFrame):
         self.ok_button.grid(row=0, column=3, pady=10, padx=10, sticky="w")
 
         #右中左
-        self.all_nodes_listbox = tk.Listbox(self.left_middle_right_frame, selectmode=tk.SINGLE)
+        self.scrollbar = tk.Scrollbar(self.left_middle_right_frame) 
+        self.scrollbar.pack(side='right', fill='y')        
+        
+        self.all_nodes_listbox = tk.Listbox(self.left_middle_right_frame, selectmode=tk.SINGLE, yscrollcommand=self.scrollbar.set, font=("Helvetica",14))
         self.all_nodes_listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         # self.all_nodes_listbox.bind('<<ListboxSelect>>', self.on_node_select)
         '''
         中間區域的左邊是選擇key element的小視窗，所有key element都會秀出來
         ''' 
-
+                  
         # 右中間框架
-        self.text_area = scrolledtext.ScrolledText(self.mid_middle_right_frame, wrap=tk.WORD, width=50, height=20)
+        self.text_area = scrolledtext.ScrolledText(self.mid_middle_right_frame, wrap=tk.NONE, width=50, height=20, font=("Helvetica",14))
         self.text_area.pack(fill=tk.BOTH, expand=True)
+        
+        self.x_scrollbar = tk.Scrollbar(self.mid_middle_right_frame, orient=tk.HORIZONTAL, command=self.text_area.xview)
+        self.x_scrollbar.pack(side='bottom', fill='x')
+        self.text_area['xscrollcommand'] = self.x_scrollbar.set
+        #Lock the text area to read-only
+        self.text_area.bind("<Key>", lambda e: "break")
         '''
         中間區域的中間會秀出檔案的element及text
+        wrap=tk.NONE 以禁用自動換行，使其可以左右滾動
         ''' 
         
         #右中右
-        self.option_listbox = tk.Listbox(self.rig_middle_right_frame)
+
+        self.option_listbox = tk.Listbox(self.rig_middle_right_frame, font=("Helvetica",14))
         self.option_listbox.pack(fill=tk.BOTH, expand=True)
         '''
         中間區域的右邊會展示所選擇的key視窗
@@ -84,8 +99,8 @@ class XMLSplitPage(ctk.CTkFrame):
         self.remove_button.pack(side=tk.LEFT,pady=5,padx=5)
 
         #右下
-        self.split_element_entry = self.default_input(self.bottom_right_frame, 1, "拆分Element：", 400, "book")
-        self.delimiter_entry = self.default_input(self.bottom_right_frame, 2, "分隔符號：", 200, "&")
+        self.split_element_entry = self.default_input(self.bottom_right_frame, 1, "拆分Element：", 400, "row")
+        self.delimiter_entry = self.default_input(self.bottom_right_frame, 2, "分隔符號：", 50, "_")
         '''
         下面區域有預設值的拆分Element跟分隔符號的輸入框
         '''
@@ -105,14 +120,15 @@ class XMLSplitPage(ctk.CTkFrame):
         '''
 
     def create_combobox(self):
+        '''
+        上面區域選擇從"All", "Before", "After"進行檔案分割的combobox建立
+        ''' 
         combobox = ttk.Combobox(self.top_right_frame,
                                 textvariable=self.selected_option,
                                 values=self.options, state="readonly")
         combobox.grid(row=0, column=0, pady=10, padx=30)
         self.selected_option.trace("w", self.on_dropdown_select)
-        '''
-        上面區域選擇從"All", "Before", "After"進行檔案分割的combobox建立
-        ''' 
+        
     
     def default_input(self, frame, row, label_text, entry_width, default_text):
         label = ctk.CTkLabel(self.bottom_right_frame, text=label_text, anchor="w")
@@ -123,11 +139,15 @@ class XMLSplitPage(ctk.CTkFrame):
         return entry
 
     def create_valid_filename(self, text):
+        '''
+        使用正則表達式移除或替換檔案名中的非法字符
+        '''
         return re.sub(r'[^\w\-_\.]', '', text)
-    '''
-    使用正則表達式移除或替換檔案名中的非法字符
-    '''
+    
     def random_load_xml_file(self, *paths):
+        '''
+        載入選定資料夾內的隨機一個xml檔案
+        '''
         files = []
         for path in paths:
             if os.path.isdir(path):
@@ -135,22 +155,25 @@ class XMLSplitPage(ctk.CTkFrame):
         if not files:
             return None
         return random.choice(files)
-    '''
-    載入選定資料夾內的隨機一個xml檔案
-    '''
+    
     
     def load_xml_files(self, *paths):
+        '''
+        載入選定資料夾內的所有xml檔案
+        '''
         files = []
         for path in paths:
             if os.path.isdir(path):
                 files.extend([os.path.join(path, f) for f in os.listdir(path) if f.endswith('.xml')])
         return files
 
-    '''
-    載入選定資料夾內的所有xml檔案
-    '''
+    
 
     def on_dropdown_select(self, *args):
+        '''
+        選擇All的時候會隨機選擇before或after路徑，選好資料夾後會跳到load_xml_file隨機選擇一個檔案
+        選好檔案路徑後再透過display_xml_content展示檔案內容
+        '''
         self.before_path = shared_data.before_path.get()
         self.after_path = shared_data.after_path.get()
         
@@ -174,12 +197,8 @@ class XMLSplitPage(ctk.CTkFrame):
         if self.file_path:
             self.load_xml_content([self.file_path])
             # self.display_xml_content([self.file_path])
-            print("******on dropdown select*****")
-            print(self.file_path)
-    '''
-    選擇All的時候會隨機選擇before或after路徑，選好資料夾後會跳到load_xml_file隨機選擇一個檔案
-    選好檔案路徑後再透過display_xml_content展示檔案內容
-    '''
+
+    
     
     def load_xml_content(self, file_paths):
         if not file_paths:
@@ -213,10 +232,11 @@ class XMLSplitPage(ctk.CTkFrame):
         self.text_area.delete('1.0', tk.END)
         
         def display_node(node, indent=""):
-            self.text_area.insert(tk.END, f"{indent}{node.tag}: {node.text.strip()}\n")               
+            self.text_area.insert(tk.END,  f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else ''}\n")               
             for child in node:
                 display_node(child, indent + "    ")
-
+        
+        print(self.root_element)
         display_node(self.root_element)
 
     # def on_node_select(self, event):
@@ -277,10 +297,8 @@ class XMLSplitPage(ctk.CTkFrame):
         
         '''
         self.option_listbox.delete(0, tk.END)
-        print("--------update option list--------")
         for node in self.child_nodes:
             self.option_listbox.insert(tk.END, node)
-            print(node)
         # self.display_xml_content([self.file_path])
 
     def split_xml(self):
@@ -296,6 +314,7 @@ class XMLSplitPage(ctk.CTkFrame):
             after_new_folder = os.path.join(self.after_path, "after_split")
             os.makedirs(before_new_folder, exist_ok=True)
             os.makedirs(after_new_folder, exist_ok=True)
+                        
             # before
             self.all_file_path = self.load_xml_files(self.folder_path[0])
             for file in self.all_file_path:
@@ -304,7 +323,7 @@ class XMLSplitPage(ctk.CTkFrame):
             
             has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
             if has_value_greater_than_one:
-                messagebox.showinfo("Warning"," Duplicate filename detected in Before")     
+                messagebox.showinfo("警告"," Duplicate filename detected in Before")     
             
             # after
             self.filename_count.clear()
@@ -316,7 +335,7 @@ class XMLSplitPage(ctk.CTkFrame):
             
             has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
             if has_value_greater_than_one:
-                messagebox.showinfo("Warning"," Duplicate filename detected in After")
+                messagebox.showinfo("警告"," Duplicate filename detected in After")
         
         elif selected_option == "Before":
             before_new_folder = os.path.join(self.before_path, "before_split")
@@ -327,7 +346,7 @@ class XMLSplitPage(ctk.CTkFrame):
             
             has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
             if has_value_greater_than_one:
-                messagebox.showinfo("Warning"," Duplicate filename detected in Before")    
+                messagebox.showinfo("警告"," Duplicate filename detected in Before")    
                 
         elif selected_option == "After":
             after_new_folder = os.path.join(self.after_path, "after_split")
@@ -338,7 +357,7 @@ class XMLSplitPage(ctk.CTkFrame):
             
             has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
             if has_value_greater_than_one:
-                messagebox.showinfo("Warning"," Duplicate filename detected in After")
+                messagebox.showinfo("警告"," Duplicate filename detected in After")
         else:
             messagebox.showinfo("Error", "Please select at least one option.")
         
@@ -385,7 +404,7 @@ class XMLSplitPage(ctk.CTkFrame):
 
                 # Save in the specified folder
                 output_folder = os.path.join(base_folder, filename)
-                node_tree.write(output_folder)
+                node_tree.write(output_folder, encoding="UTF-8")
                 print(f"File saved: {output_folder}") 
     
 

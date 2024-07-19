@@ -47,7 +47,7 @@ class PositionSettingPage(ctk.CTkFrame):
     def create_path_selector(self, frame, row, label_text, entry_width, button_text, command):
         label = ctk.CTkLabel(frame, text=label_text, anchor="w")
         label.grid(row=row, column=0, pady=20, padx=20, sticky="w")
-        entry = ctk.CTkEntry(frame, width=entry_width)
+        entry = ctk.CTkEntry(frame, textvariable=shared_data.before_path if row == 0 else shared_data.after_path if row == 1 else shared_data.report_output_path, width=entry_width)
         entry.grid(row=row, column=1)
         button = ctk.CTkButton(frame, text=button_text, command=lambda: command(entry))
         button.grid(row=row, column=2)
@@ -60,24 +60,26 @@ class PositionSettingPage(ctk.CTkFrame):
             entry.insert(0, folder_path)
 
     def save_path(self):
+        '''
+        將設置好的路徑存在全域參數內，並呼叫save_vars_to_file()將路徑存到json
+        '''
         shared_data.before_path.set(self.path_before_entry.get())
         shared_data.after_path.set(self.path_after_entry.get())
         shared_data.report_output_path.set(self.report_output_entry.get())
+        
+        shared_data.save_vars_to_file()
         messagebox.showinfo("信息", "路徑已保存")
-    '''
-    將設置好的路徑存在全域參數內
-    '''
 
     def default_input(self, frame, row, label_text, entry_width, default_text):
+        '''
+        有預設輸入值的標籤與輸入框
+        '''
         label = ctk.CTkLabel(frame, text=label_text, anchor="w")
         label.grid(row=row, column=0, pady=20, padx=20, sticky="w")
         entry = ctk.CTkEntry(frame, width=entry_width)
         entry.grid(row=row, column=1, sticky="w")
         entry.insert(0, default_text)
-        return entry
-    '''
-    有預設輸入值的標籤與輸入框
-    '''
+        return entry  
 
     def toggle_button(self, button, var):
         if var.get() == 1:
@@ -95,6 +97,9 @@ class PositionSettingPage(ctk.CTkFrame):
         return button
 
     def add_extension_to_files(self, folder_path, extension):
+        '''
+        轉換資料夾路徑下的所有檔案格式
+        '''
         if not folder_path or not extension:
             return
         
@@ -105,9 +110,6 @@ class PositionSettingPage(ctk.CTkFrame):
                 new_filename = f"{base}.{extension}"
                 new_file_path = os.path.join(folder_path, new_filename)
                 os.rename(file_path, new_file_path)
-    '''
-    轉換資料夾路徑下的所有檔案格式
-    '''
     
     def execute(self):
         self.attachment_format = self.attachment_format_entry.get()
