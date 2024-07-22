@@ -8,7 +8,7 @@ import os
 import tkinter as tk
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
-import shared_data
+import shared_data as sd
 
 class PositionSettingPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -47,7 +47,7 @@ class PositionSettingPage(ctk.CTkFrame):
     def create_path_selector(self, frame, row, label_text, entry_width, button_text, command):
         label = ctk.CTkLabel(frame, text=label_text, anchor="w")
         label.grid(row=row, column=0, pady=20, padx=20, sticky="w")
-        entry = ctk.CTkEntry(frame, textvariable=shared_data.before_path if row == 0 else shared_data.after_path if row == 1 else shared_data.report_output_path, width=entry_width)
+        entry = ctk.CTkEntry(frame, textvariable=sd.before_path if row == 0 else sd.after_path if row == 1 else sd.report_output_path, width=entry_width)
         entry.grid(row=row, column=1)
         button = ctk.CTkButton(frame, text=button_text, command=lambda: command(entry))
         button.grid(row=row, column=2)
@@ -63,11 +63,11 @@ class PositionSettingPage(ctk.CTkFrame):
         '''
         將設置好的路徑存在全域參數內，並呼叫save_vars_to_file()將路徑存到json
         '''
-        shared_data.before_path.set(self.path_before_entry.get())
-        shared_data.after_path.set(self.path_after_entry.get())
-        shared_data.report_output_path.set(self.report_output_entry.get())
+        sd.before_path.set(self.path_before_entry.get())
+        sd.after_path.set(self.path_after_entry.get())
+        sd.report_output_path.set(self.report_output_entry.get())
         
-        shared_data.save_vars_to_file()
+        sd.save_vars_to_file()
         messagebox.showinfo("信息", "路徑已保存")
 
     def default_input(self, frame, row, label_text, entry_width, default_text):
@@ -115,7 +115,7 @@ class PositionSettingPage(ctk.CTkFrame):
         self.attachment_format = self.attachment_format_entry.get()
         
         if self.before_button_var.get() == 1:
-            self.add_extension_to_files(shared_data.before_path.get(), self.attachment_format)
+            self.add_extension_to_files(sd.before_path.get(), self.attachment_format)
         if self.after_button_var.get() == 1:
-            self.add_extension_to_files(shared_data.after_path.get(), self.attachment_format)       
+            self.add_extension_to_files(sd.after_path.get(), self.attachment_format)       
         messagebox.showinfo("信息", "文件名已修改")

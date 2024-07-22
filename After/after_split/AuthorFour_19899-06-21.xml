@@ -1,4 +1,4 @@
-<book id="4" genre="non-fiction">
+<book id="4" genre="fiction">
 			<title>Book Title Four</title>
 			<author>
 				<name>Author Four</name>
@@ -10,4 +10,4 @@
 				<publisher>Publisher Four</publisher>
 			</publish>
 		</book>
-	
+		

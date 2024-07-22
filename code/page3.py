@@ -1,12 +1,13 @@
 import os
 import re
+import time
 import random
 import tkinter as tk
 import customtkinter as ctk
 from datetime import datetime
 import xml.etree.ElementTree as ET
 from tkinter import ttk, messagebox, scrolledtext
-import shared_data 
+import shared_data as sd
 
 class XMLSplitPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -117,9 +118,9 @@ class XMLSplitPage(ctk.CTkFrame):
 
         self.sequence_label = ctk.CTkLabel(self.bottom_right_frame, text="流水號：")
         self.sequence_label.grid(row=3, column=0, pady=10, padx=50, sticky="w")       
-        self.sequence_var = tk.StringVar(value="無")
+        self.sequence_var = tk.StringVar(value=" 無 ")
         self.sequence_options = ctk.CTkSegmentedButton(master=self.bottom_right_frame,
-             values=["前面", "後面", "無"],variable=self.sequence_var,)        
+             values=["前面", "後面", " 無 "],variable=self.sequence_var,)        
         self.sequence_options.grid(row=3, column=1, pady=10, padx=10, sticky="w")
         
 
@@ -178,8 +179,8 @@ class XMLSplitPage(ctk.CTkFrame):
         選擇All的時候會隨機選擇before或after路徑，選好資料夾後會跳到load_xml_file隨機選擇一個檔案
         選好檔案路徑後再透過display_xml_content展示檔案內容
         '''
-        self.before_path = shared_data.before_path.get()
-        self.after_path = shared_data.after_path.get()
+        self.before_path = sd.before_path.get()
+        self.after_path = sd.after_path.get()
         
         self.option_listbox.delete(0, tk.END)
         self.child_nodes.clear()
@@ -312,7 +313,7 @@ class XMLSplitPage(ctk.CTkFrame):
         progress_bar.pack(pady=10)
         
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        repeat_new_folder = os.path.join(shared_data.report_output_path.get(), "repeat_file")
+        repeat_new_folder = os.path.join(sd.report_output_path.get(), "repeat_file")
         os.makedirs(repeat_new_folder, exist_ok=True)
         file_path = os.path.join(repeat_new_folder, f"repeat_file_{current_time}.txt")
         
@@ -458,22 +459,25 @@ class XMLSplitPage(ctk.CTkFrame):
         except Exception as e:
             print(f"Error processing file {xml_path}: {e}")
         
-    def print_file(self, count_dict, file_name, split_element, child_nodes, delimiter, sequence, file_path, open_file_boolean=True ):
+    def print_file(self, count_dict, file_name, split_element, child_nodes, delimiter,
+                   serial_number, file_path, open_file_boolean=True ):
         '''
         在Final底下新建repeat_file，將拆分後重複文件放在那
         
-        '''
-              
+        ''' 
+        TIME_START = time.time()
+        TIME_END = time.time()
         with open(file_path, 'a') as file:
                                 
             file.write("------------------------Header ---------------------\n")
             file.write(f"執行時間     :{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            file.write(f"花費時間     :{TIME_START-TIME_END} 秒\n")                    
             file.write(f"執行檔案     :{file_name}\n")                    
             file.write("--------------------Input Parameter ---------------------\n")           
             file.write(f"拆分Element :{split_element}\n")
             file.write(f"命名Key     :{child_nodes}\n")
             file.write(f"分隔符號    :{delimiter}\n")
-            file.write(f"流水號選擇  :{sequence}\n")
+            file.write(f"流水號選擇  :{serial_number}\n")
             file.write("--------------------內容 ---------------------\n")
             
             for key, value in count_dict.items():
