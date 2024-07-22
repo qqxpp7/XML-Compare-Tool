@@ -1,4 +1,0 @@
-Key 'AuthorOne.xml' appears 2 times.
-Key 'AuthorTwo.xml' appears 2 times.
-Key 'AuthorThree.xml' appears 2 times.
-Key 'AuthorFour.xml' appears 2 times.

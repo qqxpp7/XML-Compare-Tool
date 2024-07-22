@@ -311,6 +311,10 @@ class XMLSplitPage(ctk.CTkFrame):
         progress_bar = ttk.Progressbar(progress_window)
         progress_bar.pack(pady=10)
         
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        repeat_new_folder = os.path.join(shared_data.report_output_path.get(), "repeat_file")
+        os.makedirs(repeat_new_folder, exist_ok=True)
+        file_path = os.path.join(repeat_new_folder, f"repeat_file_{current_time}.txt")
         
         self.all_file_path = self.load_xml_files(self.folder_path[0])
         total_files = len(self.all_file_path)  # 計算Before文件數量
@@ -329,20 +333,24 @@ class XMLSplitPage(ctk.CTkFrame):
             # before
             self.all_file_path = self.load_xml_files(self.folder_path[0])
             for i, file in enumerate(self.all_file_path):
-                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), before_new_folder)
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), 
+                                         self.delimiter_entry.get(), before_new_folder)
                 progress_bar['value'] = i + 1
                 update_progress()  
                 
             has_value_greater_than_one = any(value > 1 for value in self.filename_count.values())
             if has_value_greater_than_one:
-                messagebox.showinfo("警告"," Duplicate filename detected in Before")     
+                messagebox.showinfo("警告"," Duplicate filename detected in Before")   
+            self.print_file(self.filename_count, 'Before', self.split_element_entry.get(), self.child_nodes,
+                            self.delimiter_entry.get(), self.sequence_var.get(), file_path, False)
             
             # after
             self.filename_count.clear()
             self.all_file_path = self.load_xml_files(self.folder_path[1]) 
             
             for i, file in enumerate(self.all_file_path):
-                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), 
+                                         self.delimiter_entry.get(), after_new_folder)
                 progress_bar['value'] = i + 1 + total_files
                 update_progress()
                 
@@ -355,13 +363,16 @@ class XMLSplitPage(ctk.CTkFrame):
             if os.name == 'nt':
                     os.startfile(before_new_folder)
                     os.startfile(after_new_folder)
+            self.print_file(self.filename_count, 'After', self.split_element_entry.get(), self.child_nodes, 
+                            self.delimiter_entry.get(), self.sequence_var.get(), file_path)
                     
         elif selected_option == "Before":
             before_new_folder = os.path.join(self.before_path, "before_split")
             os.makedirs(before_new_folder, exist_ok=True)
             self.all_file_path = self.load_xml_files(*self.folder_path)  
             for i, file in enumerate(self.all_file_path):
-                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), before_new_folder)
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes),
+                                         self.delimiter_entry.get(), before_new_folder)
                 progress_bar['value'] = i + 1
                 update_progress()
                 
@@ -372,14 +383,16 @@ class XMLSplitPage(ctk.CTkFrame):
             messagebox.showinfo("Success", "XML split successfully!")
             if os.name == 'nt':  # For Windows
                 os.startfile(before_new_folder)   
-            self.print_file(self.filename_count, 'before', self.split_element_entry.get(), self.child_nodes, self.delimiter_entry.get(), self.sequence_var.get())
+            self.print_file(self.filename_count, 'Before', self.split_element_entry.get(), self.child_nodes,
+                            self.delimiter_entry.get(), self.sequence_var.get(), file_path)
             
         elif selected_option == "After":
             after_new_folder = os.path.join(self.after_path, "after_split")
             os.makedirs(after_new_folder, exist_ok=True)
             self.all_file_path = self.load_xml_files(*self.folder_path)  
             for i, file in enumerate(self.all_file_path):
-                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), self.delimiter_entry.get(), after_new_folder)
+                self.save_books_from_xml(file, self.split_element_entry.get(), list(self.child_nodes), 
+                                         self.delimiter_entry.get(), after_new_folder)
                 progress_bar['value'] = i + 1
                 update_progress()
                 
@@ -390,6 +403,8 @@ class XMLSplitPage(ctk.CTkFrame):
             messagebox.showinfo("Success", "XML split successfully!")
             if os.name == 'nt':  # For Windows
                 os.startfile(after_new_folder)
+            self.print_file(self.filename_count, 'After', self.split_element_entry.get(), self.child_nodes, 
+                            self.delimiter_entry.get(), self.sequence_var.get(), file_path)
         else:
             messagebox.showinfo("Error", "Please select at least one option.")
         
@@ -443,29 +458,30 @@ class XMLSplitPage(ctk.CTkFrame):
         except Exception as e:
             print(f"Error processing file {xml_path}: {e}")
         
-    def print_file(self, count_dict, file_name, split_element, child_nodes, delimiter, sequence ):
-        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        repeat_new_folder = os.path.join(shared_data.report_output_path.get(), "repeat_file")
-        os.makedirs(repeat_new_folder, exist_ok=True)
-        # 生成帶當前時間的文件名
-        file_path = os.path.join(repeat_new_folder, f"repeat_file_{current_time}.txt")
+    def print_file(self, count_dict, file_name, split_element, child_nodes, delimiter, sequence, file_path, open_file_boolean=True ):
+        '''
+        在Final底下新建repeat_file，將拆分後重複文件放在那
         
+        '''
+              
         with open(file_path, 'a') as file:
                                 
-            file.write(f"--------------------Header ---------------------\n")
-            file.write(f"執行時間:{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            file.write(f"執行檔案:{file_name}\n")                    
-            file.write(f"--------------------Input Parameter ---------------------\n")           
-            file.write(f"拆分Element:{split_element}\n")
-            file.write(f"命名Key:{child_nodes}\n")
-            file.write(f"分隔符號:{delimiter}\n")
-            file.write(f"流水號選擇:{sequence}\n")
-            file.write(f"--------------------內容 ---------------------\n")
+            file.write("------------------------Header ---------------------\n")
+            file.write(f"執行時間     :{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            file.write(f"執行檔案     :{file_name}\n")                    
+            file.write("--------------------Input Parameter ---------------------\n")           
+            file.write(f"拆分Element :{split_element}\n")
+            file.write(f"命名Key     :{child_nodes}\n")
+            file.write(f"分隔符號    :{delimiter}\n")
+            file.write(f"流水號選擇  :{sequence}\n")
+            file.write("--------------------內容 ---------------------\n")
             
             for key, value in count_dict.items():
                 if value >= 2:
                      # 將資料寫入文本文件
-                    file.write(f"{key} appears {value} times.\n")
-                        
-            if os.name == 'nt':
-                os.startfile(repeat_new_folder)
+                    file.write(f"{key} 出現 {value} 次.\n")
+            
+            file.write("\n\n")       
+            if os.name == 'nt' and open_file_boolean:
+                
+                os.startfile(file_path)
