@@ -1,0 +1,16 @@
+------------------------Header ---------------------
+執行時間     :2024-07-23 15:11:36
+花費時間     :0.0 秒
+執行檔案     :before_split、after_split
+輸出檔案     :C:/Users/a9037/OneDrive/文件/GitHub/XML-Compare-Tool/Final\different_file
+--------------------Input Parameter ---------------------
+移動差異檔案  : 是 
+Before 數量   :8
+After 數量    :6
+--------------------內容 ---------------------
+before 有, after 沒有的檔案: 2
+2_AuthorThree_1990-11-23.xml.xml
+2_AuthorTwo_1975-05-15.xml.xml
+
+
+

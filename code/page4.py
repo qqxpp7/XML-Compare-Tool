@@ -17,6 +17,9 @@ class FindDifferencesPage(ctk.CTkFrame):
         super().__init__(parent)
         self.controller = controller
         self.create_widgets()
+        
+        self.MOVE_FILE_BOOLEAN = False
+
 
     def create_widgets(self):
         
@@ -64,23 +67,49 @@ class FindDifferencesPage(ctk.CTkFrame):
                     self.split_folders.append(os.path.join(dirpath, dirname))
         return self.split_folders[0]
 
-
+    def move_file(self, file_name, source_directory, target_directory):
+           """
+           移動檔案從來源目錄到目標目錄
+           """
+           source_file = os.path.join(source_directory, file_name)
+           target_file = os.path.join(target_directory, file_name)
+           os.rename(source_file, target_file)  
+               
     def open_report(self):
         '''
         開啟差異檔案移動到的資料夾
         '''
-        self.different_report_name = self.split_element_entry.get()
+        try:
+            if not os.path.exists(self.move_new_folder):
+                self.messagebox.showinfo("錯誤", f"目錄 {self.move_new_folder} 不存在。")
+    
+            # 不同操作系統有不同的開啟資料夾方式
+            if os.name == 'nt':  # Windows
+                os.startfile(self.move_new_folder)
+            else:
+                self.messagebox.showinfo("錯誤", "不支援的操作系統。")
+                
+        except Exception as e:
+            self.messagebox.showinfo("錯誤", f"發生錯誤: {e}")
         
     def execute(self):
+        '''
+        在報表輸出資料夾下面創立一個different_file資料夾
+        會在底下生成差異分析的報表(txt)
+        
+        透過find_folders_with_split函式找到shared_data before跟after底下的split資料夾
+        
+        '''
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         different_new_folder = os.path.join(sd.report_output_path.get(), "different_file")
         os.makedirs(different_new_folder, exist_ok=True)
         report_name = self.report_name_entry.get() + "_" + current_time + '.txt'
         file_path = os.path.join(different_new_folder, report_name)  
-
+        
+        # 判斷 after directory 有，before directory 沒有的檔案
         self.before_file_names = os.listdir(self.find_folders_with_split(sd.before_path.get()))
         self.after_file_names = os.listdir(self.find_folders_with_split(sd.after_path.get()))
-
+     
         for file in self.before_file_names:
             if file in self.after_file_names:
                 self.after_file_names.remove(file)
@@ -89,16 +118,26 @@ class FindDifferencesPage(ctk.CTkFrame):
         self.before_file_names_2 = os.listdir(self.find_folders_with_split(sd.before_path.get()))
         self.after_file_names_2 = os.listdir(self.find_folders_with_split(sd.after_path.get()))
 
+
         for file in self.after_file_names_2:
             if file in self.before_file_names_2:
                 self.before_file_names_2.remove(file)
         
         if self.sequence_var.get() == " 否 ":
-            self.print_file(self.report_name_entry.get(), file_path)            
+            self.print_file(self.report_name_entry.get(), file_path)
+            
         else:
             self.move = different_new_folder
             self.print_file(self.report_name_entry.get(), file_path, self.move)
-        print("執行")
+            
+            self.move_new_folder = os.path.join(sd.report_output_path.get(), "move_file")
+            os.makedirs(self.move_new_folder, exist_ok=True)
+            
+            for file in self.before_file_names_2:
+                self.move_file(file, self.find_folders_with_split(sd.before_path.get()), self.move_new_folder)
+            for file in self.after_file_names:
+                self.move_file(file, self.find_folders_with_split(sd.after_path.get()), self.move_new_folder)
+
         
     def print_file(self, file_name, file_path, move="無" ) :
         TIME_START = time.time()
@@ -133,4 +172,4 @@ class FindDifferencesPage(ctk.CTkFrame):
             if os.name == 'nt':
                 
                 os.startfile(file_path)
-        
+                
