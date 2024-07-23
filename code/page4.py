@@ -17,8 +17,6 @@ class FindDifferencesPage(ctk.CTkFrame):
         super().__init__(parent)
         self.controller = controller
         self.create_widgets()
-        
-        self.MOVE_FILE_BOOLEAN = False
 
 
     def create_widgets(self):
@@ -35,9 +33,9 @@ class FindDifferencesPage(ctk.CTkFrame):
         execute_button = ctk.CTkButton(self, text="執行", command=self.execute, width=200)
         execute_button.grid(row=3, column=0, pady=10, padx=10)
         
-        open_report_button = ctk.CTkButton(self, text="開啟檔案", command=self.open_report, 
+        open_move_folder_button = ctk.CTkButton(self, text="開啟檔案", command=self.open_move_folder, 
                                            width=200, fg_color="#CD5C5C")
-        open_report_button.grid(row=4, column=0, pady=10, padx=10)
+        open_move_folder_button.grid(row=4, column=0, pady=10, padx=10)
     
         
     def default_input(self, frame, row, label_text, entry_width, default_text):
@@ -75,7 +73,7 @@ class FindDifferencesPage(ctk.CTkFrame):
            target_file = os.path.join(target_directory, file_name)
            os.rename(source_file, target_file)  
                
-    def open_report(self):
+    def open_move_folder(self):
         '''
         開啟差異檔案移動到的資料夾
         '''

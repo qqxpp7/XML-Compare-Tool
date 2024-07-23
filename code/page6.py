@@ -6,8 +6,10 @@ Created on Tue Jul 16 15:01:56 2024
 """
 import os
 import shutil
+import tkinter as tk
 import shared_data as sd
 import customtkinter as ctk
+from tkinter import ttk, messagebox, scrolledtext
 
 '''
 
@@ -24,10 +26,78 @@ class CopyDataPage(ctk.CTkFrame):
         
 
     def create_widgets(self):
-        label = ctk.CTkLabel(self, text="Copy 資料功能頁面")
-        label.pack(padx=10, pady=10)
+        '''
+        右邊畫面分為上、中、下三個區域
+        ''' 
+        self.top_right_frame = ctk.CTkFrame(self)
+        self.top_right_frame.pack(pady=5, padx=10, fill="x")
 
+        self.middle_right_frame = ctk.CTkFrame(self)
+        self.middle_right_frame.pack(pady=5, padx=10, fill="both", expand=True)
+        
+        self.bottom_right_frame = ctk.CTkFrame(self)
+        self.bottom_right_frame.pack(pady=5, padx=10, fill="x")
+        
+        '''
+        上面區域
+        可以輸入要加入的檔案名稱，有+的按鈕可以加入
+        還有執行copy的按鈕
+        
+        '''
+        
+        self.file_name_entry = ctk.CTkEntry(self.top_right_frame, width=300)
+        self.file_name_entry.grid(row=0, column=0, sticky="w")
+        
+        self.add_button = ctk.CTkButton(self.top_right_frame, text="+", width=100, height=30, command=self.is_filename_in_directory)
+        self.add_button.grid(row=0, column=1, sticky="w")
+         
+        self.copy_button = ctk.CTkButton(self.top_right_frame, text="COPY", width=200, command = self.copy_name_file)
+        self.copy_button.grid(row=0, column=2, pady=10, padx=10, sticky="w")
+        '''
+        中間區域
+        會展示出所選擇/上傳的所有檔案名稱
+        
+        '''
+        self.text_area = scrolledtext.ScrolledText(self.middle_right_frame, wrap=tk.NONE, font=("Helvetica",14))
+        self.text_area.pack(fill="both", expand=True)
+        
+        self.upload_button = ctk.CTkButton(self.middle_right_frame, text="↥", width=80, height=30, command=self.upload_files_list)
+        self.upload_button.pack(side=tk.RIGHT, pady=5, padx=5)
+        
+        self.download_button = ctk.CTkButton(self.middle_right_frame, text="↧", width=80, height=30, command=self.download_files_list)
+        self.download_button.pack(side=tk.RIGHT, pady=5, padx=5)
+        
+        self.remove_button = ctk.CTkButton(self.middle_right_frame, text="-", width=80, height=30, command=self.clear_directory)
+        self.remove_button.pack(side=tk.RIGHT, pady=5, padx=5)
+        '''
+        下面區域
+        清空舊資料的選擇
+        開啟COPY資料夾的按鈕
+        
+        '''
+        self.sequence_label = ctk.CTkLabel(self.bottom_right_frame, text="清空舊資料：")
+        self.sequence_label.grid(row=0, column=0, pady=10, padx=20, sticky="w")
 
+        self.sequence_var = tk.StringVar(value=" 否 ")
+        self.sequence_options = ctk.CTkSegmentedButton(master=self.bottom_right_frame,
+                                                       values=[" 是 ", " 否 "], variable=self.sequence_var)
+        self.sequence_options.grid(row=0, column=1, pady=10, padx=10, sticky="w")
+
+        open_copy_folder_button = ctk.CTkButton(self.bottom_right_frame, text="開啟COPY資料夾", command=self.open_copy_folder,
+                                                width=200, fg_color="#CD5C5C")
+        open_copy_folder_button.grid(row=1, column=0, columnspan=2, pady=10, padx=10)
+
+    def copy_name_file(self):
+        self.before_file_directory = sd.before_path.get()
+        self.after_file_directory = sd.after_path.get()
+        self.result_directory = os.path.join(sd.result_path.get(), 'copy')
+    
+        self.file_name_report = os.path.join(sd.result_path.get(), 'filename_list.txt')
+    
+        self.copy_and_rename_files(self.before_file_directory, self.after_file_directory,
+                                   self.result_directory, self.input_file_list )
+        
+        
     def copy_and_rename_files(self, before_file_directory, after_file_directory, result_directory, file_list):
         '''
         主功能一： loop through file_list
@@ -116,7 +186,24 @@ class CopyDataPage(ctk.CTkFrame):
         else:
             print(f"指定的資料夾 {directory} 不存在")
     
+    def open_copy_folder(self):
+        '''
+        開啟COPY資料夾
+        '''
+        try:
+            if not os.path.exists(self.copy_new_folder):
+                self.messagebox.showinfo("錯誤", f"目錄 {self.move_new_folder} 不存在。")
     
+            # 不同操作系統有不同的開啟資料夾方式
+            if os.name == 'nt':  # Windows
+                os.startfile(self.copy_new_folder)
+            else:
+                self.messagebox.showinfo("錯誤", "不支援的操作系統。")
+                
+        except Exception as e:
+            self.messagebox.showinfo("錯誤", f"發生錯誤: {e}")
+    
+            '''
     if __name__ == "__main__":
         before_file_directory = sd.before_path.get()
         after_file_directory = sd.after_path.get()
@@ -148,4 +235,5 @@ class CopyDataPage(ctk.CTkFrame):
         clear_directory(before_file_directory)
     
         copy_and_rename_files(before_file_directory, after_file_directory, result_directory, input_file_list )
+        '''
 

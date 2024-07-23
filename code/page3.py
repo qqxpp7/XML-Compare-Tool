@@ -72,7 +72,6 @@ class XMLSplitPage(ctk.CTkFrame):
         
         self.all_nodes_listbox = tk.Listbox(self.left_middle_right_frame, selectmode=tk.SINGLE, yscrollcommand=self.scrollbar.set, font=("Helvetica",14))
         self.all_nodes_listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        # self.all_nodes_listbox.bind('<<ListboxSelect>>', self.on_node_select)
         
                   
         # 右中間框架
@@ -99,10 +98,10 @@ class XMLSplitPage(ctk.CTkFrame):
         self.option_listbox = tk.Listbox(self.rig_middle_right_frame, font=("Helvetica",14))
         self.option_listbox.pack(fill=tk.BOTH, expand=True)
                
-        self.add_button = ctk.CTkButton(self.rig_middle_right_frame, text="+",width=80,height=30, command=self.add_child_node)
+        self.add_button = ctk.CTkButton(self.rig_middle_right_frame, text="+", width=80, height=30, command=self.add_child_node)
         self.add_button.pack(side=tk.LEFT, pady=5,padx=5)
 
-        self.remove_button = ctk.CTkButton(self.rig_middle_right_frame, text="-",width=80,height=30, command=self.remove_child_node)
+        self.remove_button = ctk.CTkButton(self.rig_middle_right_frame, text="-", width=80, height=30, command=self.remove_child_node)
         self.remove_button.pack(side=tk.LEFT,pady=5,padx=5)
 
 
