@@ -52,7 +52,7 @@ class FindDifferencesPage(ctk.CTkFrame):
     
     def find_folders_with_split(self, root_dir):
         '''
-        找到資料夾下的split資料夾
+        找到資料夾下的split資料夾，如果沒找到就返回原本資料夾
         os.walk會返回三個值
         dirpath：當前遍歷到的目錄路徑
         dirnames：當前目錄下的所有目錄名稱列表
@@ -63,7 +63,11 @@ class FindDifferencesPage(ctk.CTkFrame):
             for dirname in dirnames:
                 if 'split' in dirname:
                     self.split_folders.append(os.path.join(dirpath, dirname))
-        return self.split_folders[0]
+                    
+        if self.split_folders:
+            return self.split_folders[0]
+        
+        return root_dir
 
     def move_file(self, file_name, source_directory, target_directory):
            """

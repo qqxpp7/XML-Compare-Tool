@@ -9,7 +9,7 @@ import shutil
 import tkinter as tk
 import shared_data as sd
 import customtkinter as ctk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import  filedialog, messagebox
 
 '''
 
@@ -24,8 +24,8 @@ class CopyDataPage(ctk.CTkFrame):
         self.controller = controller
         self.create_widgets()
         
-
     def create_widgets(self):
+        
         '''
         右邊畫面分為上、中、下三個區域
         ''' 
@@ -48,26 +48,34 @@ class CopyDataPage(ctk.CTkFrame):
         self.file_name_entry = ctk.CTkEntry(self.top_right_frame, width=300)
         self.file_name_entry.grid(row=0, column=0, sticky="w")
         
-        self.add_button = ctk.CTkButton(self.top_right_frame, text="+", width=100, height=30, command=self.is_filename_in_directory)
+        self.add_button = ctk.CTkButton(self.top_right_frame, text="+", width=100, height=30
+                                        ,command=self.add_filename)
         self.add_button.grid(row=0, column=1, sticky="w")
          
-        self.copy_button = ctk.CTkButton(self.top_right_frame, text="COPY", width=200, command = self.copy_name_file)
+        self.copy_button = ctk.CTkButton(self.top_right_frame, text="COPY", width=200
+                                         ,command = self.copy_name_file)
         self.copy_button.grid(row=0, column=2, pady=10, padx=10, sticky="w")
         '''
         中間區域
         會展示出所選擇/上傳的所有檔案名稱
         
         '''
-        self.text_area = scrolledtext.ScrolledText(self.middle_right_frame, wrap=tk.NONE, font=("Helvetica",14))
-        self.text_area.pack(fill="both", expand=True)
+        self.mylabel = tk.Label(self.middle_right_frame, bg='#87CEFA', text='選擇要複製的檔案')
+        self.mylabel.pack(fill="both",side=tk.TOP) 
         
-        self.upload_button = ctk.CTkButton(self.middle_right_frame, text="↥", width=80, height=30, command=self.upload_files_list)
+        self.listbox = tk.Listbox(self.middle_right_frame, font=("Helvetica",14))
+        self.listbox.pack(fill="both", expand=True)
+        
+        self.upload_button = ctk.CTkButton(self.middle_right_frame, text="↥上傳", width=80, height=30,
+                                   font=("Helvetica", 16), command=lambda: self.upload_files_list())      
         self.upload_button.pack(side=tk.RIGHT, pady=5, padx=5)
         
-        self.download_button = ctk.CTkButton(self.middle_right_frame, text="↧", width=80, height=30, command=self.download_files_list)
+        self.download_button = ctk.CTkButton(self.middle_right_frame, text="↧下載", width=80, height=30,
+                                             font=("Helvetica", 16), command=lambda: self.download_files_list())
         self.download_button.pack(side=tk.RIGHT, pady=5, padx=5)
         
-        self.remove_button = ctk.CTkButton(self.middle_right_frame, text="-", width=80, height=30, command=self.clear_directory)
+        self.remove_button = ctk.CTkButton(self.middle_right_frame, text="-", width=80, height=30,
+                                           font=("Helvetica", 16), command=self.remove_filename)
         self.remove_button.pack(side=tk.RIGHT, pady=5, padx=5)
         '''
         下面區域
@@ -83,20 +91,50 @@ class CopyDataPage(ctk.CTkFrame):
                                                        values=[" 是 ", " 否 "], variable=self.sequence_var)
         self.sequence_options.grid(row=0, column=1, pady=10, padx=10, sticky="w")
 
-        open_copy_folder_button = ctk.CTkButton(self.bottom_right_frame, text="開啟COPY資料夾", command=self.open_copy_folder,
-                                                width=200, fg_color="#CD5C5C")
-        open_copy_folder_button.grid(row=1, column=0, columnspan=2, pady=10, padx=10)
+        self.open_copy_folder_button = ctk.CTkButton(self.bottom_right_frame, text="開啟COPY資料夾", 
+                                                command=self.open_copy_folder, width=200, fg_color="#CD5C5C")
+        self.open_copy_folder_button.grid(row=1, column=0, columnspan=2, pady=10, padx=10)
+
+
+    def find_folders_with_split(self, root_dir):
+        '''
+        找到資料夾下的split資料夾，如果沒找到就返回原本資料夾
+        os.walk會返回三個值
+        dirpath：當前遍歷到的目錄路徑
+        dirnames：當前目錄下的所有目錄名稱列表
+        filenames：當前目錄下的所有檔案名稱列表
+        '''
+        self.split_folders = []
+        for dirpath, dirnames, filenames in os.walk(root_dir):
+            for dirname in dirnames:
+                if 'split' in dirname:
+                    self.split_folders.append(os.path.join(dirpath, dirname))
+                    
+        if self.split_folders:
+            return self.split_folders[0]
+        
+        return root_dir
+    
 
     def copy_name_file(self):
-        self.before_file_directory = sd.before_path.get()
-        self.after_file_directory = sd.after_path.get()
-        self.result_directory = os.path.join(sd.result_path.get(), 'copy')
-    
-        self.file_name_report = os.path.join(sd.result_path.get(), 'filename_list.txt')
-    
+        '''
+        點擊copy會開始從BEFORE、AFTER複製想要的檔案到指定路徑
+        '''
+        
+        self.result_directory = os.path.join(sd.report_output_path.get(), 'copy')
+        os.makedirs(self.result_directory, exist_ok=True)
+
+        
+        self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
+        self.after_file_directory = self.find_folders_with_split(sd.after_path.get())
+        self.input_file_list = [item.strip()+".xml" for item in self.listbox.get(0, tk.END)]
+        
+        if self.sequence_var.get() == " 是 ":           
+            self.clear_directory(self.result_directory)
+            
         self.copy_and_rename_files(self.before_file_directory, self.after_file_directory,
                                    self.result_directory, self.input_file_list )
-        
+            
         
     def copy_and_rename_files(self, before_file_directory, after_file_directory, result_directory, file_list):
         '''
@@ -109,8 +147,6 @@ class CopyDataPage(ctk.CTkFrame):
             # Copy 'after' file to target directory and rename it
             self.copy_and_rename(file_name, after_file_directory, '_after.xml', result_directory)
     
-        os.startfile(result_directory)
-    
     
     def copy_and_rename(self, file_name, source_directory, suffix, result_directory):
         '''
@@ -118,56 +154,98 @@ class CopyDataPage(ctk.CTkFrame):
         '''
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
-    
-        shutil.copy(os.path.join(source_directory, file_name), result_directory)
-        os.rename(
-            os.path.join(result_directory, file_name),
-            os.path.join(result_directory, file_name.replace('.xml', suffix))
-        )
+            
+        try:
+            shutil.copy(os.path.join(source_directory, file_name), result_directory)
+            os.rename(
+                os.path.join(result_directory, file_name),
+                os.path.join(result_directory, file_name.replace('.xml', suffix))
+            )
+        except Exception as e:
+            os.remove(os.path.join(result_directory, file_name))
+            print("Error", f"An unexpected error occurred: {e}")
     
     def get_filenames_from_directory(self, directory)->list:
         '''
         獲取指定資料夾內的所有檔案名稱（去除副檔名）
         '''
         filenames = [os.path.splitext(f)[0] for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
-        return filenames
+        return filenames 
     
     
-    
-    def download_files_list(self, directory, output_file):
+    def download_files_list(self):
         '''
         獲取指定資料夾內的所有檔案名稱（去除副檔名） txt
         '''
-        filenames = self.get_filenames_from_directory(directory)
+        self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
         
-        with open(output_file, 'w') as file:
+        filenames = self.get_filenames_from_directory(self.before_file_directory)
+
+        file_path = os.path.join(sd.report_output_path.get(), 'file_name.txt')
+        
+        
+        with open(file_path, 'w') as file:
             for name in filenames:
                 file.write(name + '\n')
+        os.startfile(file_path)
     
-    def upload_files_list(self, directory, txt_file_path)-> (list, list):
+    def upload_files_list(self):
         '''
         讀取 txt 文件, 比對合法和不合法的檔案名稱
+        directory是before_split
+        txt_file_path 是可以選取資料夾內的txt檔案
+        valid_filenames會呈現在text_area
+        invalid_filenames會跳出messagebox警告
         '''
-        folder_filenames = self.get_filenames_from_directory(directory)
-    
+        self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
+        
+        txt_file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
+        if not txt_file_path:
+            messagebox.showwarning("Warning", "未選取任何檔案")
+            return
+        
+        folder_filenames = self.get_filenames_from_directory(self.before_file_directory)
+        
         with open(txt_file_path, 'r') as file:
             txt_filenames = [line.strip() for line in file.readlines()]
-        
-        valid_filenames = [name for name in txt_filenames if name in folder_filenames]
+            
+        self.listbox.delete(0, tk.END)
+        # valid_filenames = [name for name in txt_filenames if name in folder_filenames]
+        for name in txt_filenames:
+            if name in folder_filenames:
+                self.listbox.insert(tk.END, f"{name}\n")
+                
         invalid_filenames = [name for name in txt_filenames if name not in folder_filenames]
-        
-        return valid_filenames, invalid_filenames
+
+        if invalid_filenames:
+            messagebox.showwarning("Warning", f"{invalid_filenames} 不存在")
     
-    
-    def is_filename_in_directory(self, directory, filename)-> bool:
+    def add_filename(self):
         '''
         檢查檔案名稱是否存在於資料夾中
+        並檢查是否已經存在下面視窗
         '''
-        folder_filenames = self.get_filenames_from_directory(directory)
-        return filename in folder_filenames
+        self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
+        
+        folder_filenames = self.get_filenames_from_directory(self.before_file_directory)
+        
+        file_name = self.file_name_entry.get()
+        
+        if file_name in folder_filenames :
+            listbox_items = [item.strip() for item in self.listbox.get(0, tk.END)]
+            if file_name not in listbox_items:
+                self.listbox.insert(tk.END, f"{file_name}\n")
+            else:
+                tk.messagebox.showwarning("Warning", "已經有相同的項目")
+        else:
+            messagebox.showerror("Warning", f"{self.file_name_entry.get()} 不存在")
     
-    
-    
+    def remove_filename(self):
+        selection = self.listbox.curselection()
+        if selection:
+            index = selection[0]
+            self.listbox.delete(index)
+        
     def clear_directory(self, directory):
         '''
         確認資料夾存在, 存在 delete folder
@@ -191,49 +269,17 @@ class CopyDataPage(ctk.CTkFrame):
         開啟COPY資料夾
         '''
         try:
-            if not os.path.exists(self.copy_new_folder):
-                self.messagebox.showinfo("錯誤", f"目錄 {self.move_new_folder} 不存在。")
+            if not os.path.exists(self.result_directory):
+                self.messagebox.showinfo("錯誤", f"目錄 {self.result_directory} 不存在。")
     
             # 不同操作系統有不同的開啟資料夾方式
             if os.name == 'nt':  # Windows
-                os.startfile(self.copy_new_folder)
+                os.startfile(self.result_directory)
             else:
                 self.messagebox.showinfo("錯誤", "不支援的操作系統。")
                 
         except Exception as e:
             self.messagebox.showinfo("錯誤", f"發生錯誤: {e}")
-    
-            '''
-    if __name__ == "__main__":
-        before_file_directory = sd.before_path.get()
-        after_file_directory = sd.after_path.get()
-        result_directory = os.path.join(sd.result_path.get(), 'copy')
-    
-        file_name_report = os.path.join(sd.result_path.get(), 'filename_list.txt')
-    
-        # 頁面(最後再處理)
-    
-        # 下載全部 file_name.txt
-        download_files_list(before_file_directory, file_name_report)
-    
-        # 上傳對應資料 filename.txt
-        directory = os.path.expanduser('~/Desktop')
-        txt_file_path = os.path.expanduser('~/Desktop/filename.txt')
-        valid_filenames, invalid_filenames = upload_files_list(directory, txt_file_path)
-    
-        # 檢查單一名稱
-        file_name = '123'
-        if is_filename_in_directory(directory, '123'):
-            print('true')
-        else:
-            print('false')
-    
-    
-        print(f"合法檔案名稱: {valid_filenames}")
-        print(f"不合法檔案名稱: {invalid_filenames}")
-    
-        clear_directory(before_file_directory)
-    
-        copy_and_rename_files(before_file_directory, after_file_directory, result_directory, input_file_list )
-        '''
+
+
 
