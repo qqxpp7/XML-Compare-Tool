@@ -181,7 +181,7 @@ class CopyDataPage(ctk.CTkFrame):
         
         filenames = self.get_filenames_from_directory(self.before_file_directory)
 
-        file_path = os.path.join(sd.report_output_path.get(), 'file_name.txt')
+        file_path = os.path.join(sd.report_output_path.get(), 'copy_file_name.txt')
         
         
         with open(file_path, 'w') as file:
