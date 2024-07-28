@@ -189,6 +189,17 @@ class CopyDataPage(ctk.CTkFrame):
                 file.write(name + '\n')
         os.startfile(file_path)
     
+    def update_listbox_numbers(self):
+        '''
+        在刪除某一列的檔名後
+        會刷新全部的順序
+        '''
+        items = self.listbox.get(0, tk.END)
+        self.listbox.delete(0, tk.END)
+        for i, item in enumerate(items):
+            clean_item = item.split('. ', 1)[1] if '. ' in item else item
+            self.listbox.insert(tk.END, f"{i + 1}. {clean_item}")
+            
     def upload_files_list(self):
         '''
         讀取 txt 文件, 比對合法和不合法的檔案名稱
@@ -210,10 +221,12 @@ class CopyDataPage(ctk.CTkFrame):
             txt_filenames = [line.strip() for line in file.readlines()]
             
         self.listbox.delete(0, tk.END)
-        # valid_filenames = [name for name in txt_filenames if name in folder_filenames]
+        self.index = 1
+
         for name in txt_filenames:
             if name in folder_filenames:
-                self.listbox.insert(tk.END, f"{name}\n")
+                self.listbox.insert(tk.END, f"{self.index}. {name}\n")
+                self.index += 1
                 
         invalid_filenames = [name for name in txt_filenames if name not in folder_filenames]
 
@@ -230,11 +243,17 @@ class CopyDataPage(ctk.CTkFrame):
         folder_filenames = self.get_filenames_from_directory(self.before_file_directory)
         
         file_name = self.file_name_entry.get()
+        if not file_name:
+            messagebox.showerror("Error", "檔案名稱不能為空")
+            return
         
-        if file_name in folder_filenames :
-            listbox_items = [item.strip() for item in self.listbox.get(0, tk.END)]
-            if file_name not in listbox_items:
-                self.listbox.insert(tk.END, f"{file_name}\n")
+        clean_file_name = file_name.split('. ', 1)[1] if '. ' in file_name else file_name
+
+        if clean_file_name in folder_filenames:
+            listbox_items = [item.split('. ', 1)[1] if '. ' in item else item for item in self.listbox.get(0, tk.END)]
+            if clean_file_name not in listbox_items:
+                self.listbox.insert(tk.END, f"{len(listbox_items) + 1}. {clean_file_name}")
+                self.update_listbox_numbers()
             else:
                 tk.messagebox.showwarning("Warning", "已經有相同的項目")
         else:
@@ -245,6 +264,7 @@ class CopyDataPage(ctk.CTkFrame):
         if selection:
             index = selection[0]
             self.listbox.delete(index)
+            self.update_listbox_numbers()
         
     def clear_directory(self, directory):
         '''

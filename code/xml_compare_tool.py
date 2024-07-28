@@ -6,6 +6,7 @@ from page2 import PositionSettingPage
 from page3 import XMLSplitPage
 from page4 import FindDifferencesPage
 from page5 import ComparisonPage
+from page5_2 import ComparisonPage_2
 from page6 import CopyDataPage
 from page7 import ElementSplitPage
 
@@ -33,6 +34,7 @@ class XMLCompareTool:
         self.frames["XMLSplitPage"] = XMLSplitPage(self.root, self)
         self.frames["FindDifferencesPage"] = FindDifferencesPage(self.root, self)
         self.frames["ComparisonPage"] = ComparisonPage(self.root, self)
+        self.frames["ComparisonPage_2"] = ComparisonPage_2(self.root, self)
         self.frames["CopyDataPage"] = CopyDataPage(self.root, self)
         self.frames["ElementSplitPage"] = ElementSplitPage(self.root, self)
 
@@ -69,10 +71,11 @@ class XMLCompareTool:
             if isinstance(widget, ctk.CTkButton) and widget.cget("text") in self.function_buttons.keys():
                 widget.configure(fg_color="white", text_color="black")
         self.function_buttons[function].configure(fg_color="lightblue", text_color="black")
-
-        for frame in self.frames.values():
-            frame.pack_forget()
-        self.frames[self.get_frame_key(function)].pack(fill="both", expand=True)
+        
+        self.show_frame(self.get_frame_key(function))
+        # for frame in self.frames.values():
+        #     frame.pack_forget()
+        # self.frames[self.get_frame_key(function)].pack(fill="both", expand=True)
 
     def get_frame_key(self, function):
         mapping = {
@@ -84,7 +87,15 @@ class XMLCompareTool:
             "Copy 資料": "CopyDataPage",
             "Element 分割": "ElementSplitPage"
         }
-        return mapping.get(function, "PositionSettingPage")      
+        return mapping.get(function, "PositionSettingPage")    
+    
+    def show_frame(self, page_name):
+        '''Show a frame for the given page name'''
+        for frame in self.frames.values():
+            frame.pack_forget()
+        frame = self.frames[page_name]
+        frame.pack(fill="both", expand=True)
+        frame.tkraise()
 
 if __name__ == "__main__":
     root = ctk.CTk()  # 創建主窗口
