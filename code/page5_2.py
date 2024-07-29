@@ -28,6 +28,22 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.bottom_right_frame = ctk.CTkFrame(self)
         self.bottom_right_frame.pack(pady=5, padx=10, fill="x")
         
+        #右中左-中中-中右
+        '''
+        中間區域分三個小視窗
+        ''' 
+        self.mylabel = tk.Label(self.middle_right_frame, bg='#87CEFA', text='選擇忽略或比對的key')
+        self.mylabel.pack(fill="both",side=tk.TOP) 
+        
+        self.left_middle_right_frame = ctk.CTkFrame(self.middle_right_frame)
+        self.left_middle_right_frame.pack(pady=5, padx=5, side="left", fill="both", expand=True)
+        
+        self.mid_middle_right_frame = ctk.CTkFrame(self.middle_right_frame)
+        self.mid_middle_right_frame.pack(pady=5, padx=5, side="left", fill="both", expand=True)
+        
+        self.rig_middle_right_frame = ctk.CTkFrame(self.middle_right_frame)
+        self.rig_middle_right_frame.pack(pady=5, padx=5, side="left", fill="both", expand=True)
+        
         '''
         上面區域
 
