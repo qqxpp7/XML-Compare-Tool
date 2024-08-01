@@ -36,7 +36,7 @@ class ComparisonPage(ctk.CTkFrame):
 
         
         '''
-        self.mylabel = tk.Label(self.top_right_frame,  text='1/3    選擇範圍')
+        self.mylabel = tk.Label(self.top_right_frame,  text='1/2    選擇範圍')
         self.mylabel.pack(fill="both",side=tk.LEFT) 
         
         self.choose_button = ctk.CTkButton(self.top_right_frame, text="下一頁", width=200
