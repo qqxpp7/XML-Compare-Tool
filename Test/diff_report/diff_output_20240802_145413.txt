@@ -1,0 +1,9 @@
+刪除了元素於 /book/publish2/date/1，值為：{'year': '2021', 'month': '07'}。
+
+同名稱Element移動後位置:
+Before：/book/publish2/date/year[3] After：['/book/publish2/date/year[2]']
+Before：/book/publish2/date/month[3] After：['/book/publish2/date/month[2]']
+
+不同名稱Element位置交換:
+Tag在/book交換順序: publish1 跟 publish2交換
+Tag在/book交換順序: publish2 跟 publish1交換

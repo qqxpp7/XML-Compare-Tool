@@ -29,65 +29,50 @@ def convert_path(path):
 def parse_diff(diff, xml1_dict, xml2_dict):
     explanations = []
     if 'values_changed' in diff:
-        explanations.extend(parse_values_changed(diff['values_changed']))
+        for key, details in diff['values_changed'].items():
+            path = convert_path(key.split("root")[1])
+            old_value = details['old_value']
+            new_value = details['new_value']
+            explanations.append(f"值變更於 {path}:\n從 '{old_value}' 改為 '{new_value}'。")
     if 'dictionary_item_removed' in diff:
-        explanations.extend(parse_dict_items(diff['dictionary_item_removed'], xml1_dict, removed=True))
+        for key in diff['dictionary_item_removed']:
+            path = convert_path(key.split("root")[1])  
+            value = eval(f"xml1_dict{key.split('root')[1]}")
+            explanations.append(f"刪除了元素於 {path}，值為：{value}。")
     if 'dictionary_item_added' in diff:
-        explanations.extend(parse_dict_items(diff['dictionary_item_added'], xml2_dict, removed=False))
-    if 'iterable_item_added' in diff:
-        explanations.extend(parse_iterable_items(diff['iterable_item_added'], xml2_dict, added=True))
+        for key in diff['dictionary_item_added']:
+            path = convert_path(key.split("root")[1])  
+            value = eval(f"xml2_dict{key.split('root')[1]}")
+            explanations.append(f"新增了元素於 {path}，值為：{value}。")
     if 'iterable_item_removed' in diff:
-        explanations.extend(parse_iterable_items(diff['iterable_item_removed'], xml1_dict, added=False))
+        for key in diff['iterable_item_removed']:
+            path = convert_path(key.split("root")[1])  
+            value = eval(f"xml1_dict{key.split('root')[1]}")
+            explanations.append(f"刪除了元素於 {path}，值為：{value}。")
+    if 'iterable_item_added' in diff:
+        for key in diff['iterable_item_added']:
+            path = convert_path(key.split("root")[1])  
+            value = eval(f"xml2_dict{key.split('root')[1]}")
+            explanations.append(f"新增了元素於 {path}，值為：{value}。")
     if 'type_changes' in diff:
-        explanations.extend(parse_type_changes(diff['type_changes']))
-    return explanations
-
-def parse_values_changed(values_changed):
-    explanations = []
-    for key, details in ensure_dict(values_changed).items():
-        path = convert_path(key.split("root")[1])  # Extracts the path and converts format
-        old_value = details['old_value']
-        new_value = details['new_value']
-        explanations.append(f"值變更於 {path}:Before {old_value} After {new_value}。")
-    return explanations
-
-def parse_dict_items(items, xml_dict, removed):
-    explanations = []
-    for key in ensure_dict(items):
-        path = convert_path(key.split("root")[1])  # Extracts the path and converts format
-        value = eval(f"xml_dict{key.split('root')[1]}")
-        if removed:
-            explanations.append(f"刪除了元素於 {path}，值為：{value}。")
-        else:
-            explanations.append(f"新增了元素於 {path}，值為：{value}。")
-    return explanations
-
-def parse_iterable_items(items, xml_dict, added):
-    explanations = []
-    for key, value in ensure_dict(items).items():
-        path = convert_path(key.split("root")[1])  # Extracts the path and converts format
-        if added:
-            explanations.append(f"新增了元素於 {path}，值為：{value}。")
-        else:
-            explanations.append(f"刪除了元素於 {path}，值為：{value}。")
-    return explanations
-
-def parse_type_changes(type_changes):
-    explanations = []
-    for key, details in ensure_dict(type_changes).items():
-        path = convert_path(key.split("root")[1])  # Extracts the path and converts format
-        old_type = details['old_type']
-        new_type = details['new_type']
-        old_value = details['old_value']
-        new_value = details['new_value']
-        if old_type == list and new_type == dict:
-            removed_items = {str(k): old_value[k] for k in range(len(old_value)) if str(k) not in new_value}
-            explanations.append(f"刪除了元素於 {path}，值為：{removed_items}。")
-        elif old_type == dict and new_type == list:
-            added_items = {k: new_value[k] for k in range(len(new_value)) if k not in old_value}
-            explanations.append(f"新增了元素於 {path}，值為：{added_items}。")
-        else:
-            explanations.append(f"類型變更於 {path}:\n從 '{old_type.__name__}' 改為 '{new_type.__name__}'，\n值從 '{old_value}' 改為 '{new_value}'。")
+        for key, details in ensure_dict(diff['type_changes']).items():
+            path = convert_path(key.split("root")[1]) 
+            old_value = details['old_value']
+            new_value = details['new_value']
+            print(old_value, new_value)
+            if details['old_type'] == list and details['new_type'] == dict:  
+                removed_items = [k for k in old_value if k != new_value]
+                explanations.append(f"刪除了元素於 {path}，值為：{removed_items}。")
+                if new_value not in old_value:
+                    added_items = new_value  
+                    explanations.append(f"新增了元素於 {path}，值為：{added_items}。")
+            elif details['old_type'] == dict and details['new_type'] == list:
+                added_items = [k for k in new_value if k != old_value]
+                explanations.append(f"新增了元素於 {path}，值為：{added_items}。")
+                if old_value not in new_value:
+                    removed_items = old_value 
+                    explanations.append(f"刪除了元素於 {path}，值為：{removed_items}。")
+        return explanations
     return explanations
 
 
@@ -128,6 +113,7 @@ def count_elements(root):
 def compare_elements_count(before_count, after_count, before_values, after_values):
     all_paths = set(before_count.keys()).union(set(after_count.keys()))
     differences = {}
+    moved_elements = {}
 
     for path in all_paths:
         before = before_count.get(path, 0)
@@ -135,13 +121,16 @@ def compare_elements_count(before_count, after_count, before_values, after_value
         if before != after:
             differences[path] = (before, after)
 
-    moved_elements = {}
     for value, before_paths in before_values.items():
         if value in after_values:
             after_paths = after_values[value]
             for bp in before_paths:
                 if bp not in after_paths:
-                    moved_elements[bp] = after_paths
+                    for ap in after_paths:
+                        if bp.rsplit('/', 1)[0] == ap.rsplit('/', 1)[0]:
+                            if bp not in moved_elements:
+                                moved_elements[bp] = []
+                            moved_elements[bp].append(ap)
 
     return differences, moved_elements
 
@@ -264,7 +253,7 @@ def main(before_file, after_file):
 
     # 比較標籤位置和出現次數
     element_count_results = analyze_element_count(before_root, after_root)
-
+    
     # 比較結構和標籤順序
     structure_results = analyze_structure(before_root, after_root)
 

@@ -1,0 +1,2 @@
+刪除了元素於 ['book']['publish2']['date']，值為：[{'year': '2022', 'month': '08'}]。
+新增了元素於 ['book']['publish2']['date']，值為：['year', 'month']。

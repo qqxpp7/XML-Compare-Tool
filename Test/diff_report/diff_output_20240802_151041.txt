@@ -1,0 +1,16 @@
+值變更於 /book/publish2/date/0/year:
+從 '2021' 改為 '2020'。
+值變更於 /book/publish2/date/0/month:
+從 '07' 改為 '06'。
+值變更於 /book/publish2/date/1/year:
+從 '2022' 改為 '2021'。
+值變更於 /book/publish2/date/1/month:
+從 '08' 改為 '07'。
+
+同名稱Element移動後位置:
+Before：/book/publish2/date/year[1] After：['/book/publish2/date/year[2]']
+Before：/book/publish2/date/month[1] After：['/book/publish2/date/month[2]']
+
+不同名稱Element位置交換:
+Tag在/book交換順序: publish1 跟 publish2交換
+Tag在/book交換順序: publish2 跟 publish1交換

@@ -20,46 +20,55 @@ def xml_to_dict(file_path):
         xml_content = file.read()
         return xmltodict.parse(xml_content)
 
+def convert_path(path):
+    return path.replace("][", "/").replace("[", "/").replace("]", "").replace("'", "")
 
 def parse_diff(diff, xml1_dict, xml2_dict):
     explanations = []
     if 'values_changed' in diff:
         for key, details in diff['values_changed'].items():
-            path = key.split("root")[1]  # Extracts the path
+            path = convert_path(key.split("root")[1])
             old_value = details['old_value']
             new_value = details['new_value']
             explanations.append(f"值變更於 {path}:\n從 '{old_value}' 改為 '{new_value}'。")
     if 'dictionary_item_removed' in diff:
         for key in diff['dictionary_item_removed']:
-            path = key.split("root")[1]  # Extracts the path
-            value = eval(f"xml1_dict{path}")
+            path = convert_path(key.split("root")[1])  
+            value = eval(f"xml1_dict{key.split('root')[1]}")
             explanations.append(f"刪除了元素於 {path}，值為：{value}。")
     if 'dictionary_item_added' in diff:
         for key in diff['dictionary_item_added']:
-            path = key.split("root")[1]  # Extracts the path
-            value = eval(f"xml2_dict{path}")
+            path = convert_path(key.split("root")[1])  
+            value = eval(f"xml2_dict{key.split('root')[1]}")
             explanations.append(f"新增了元素於 {path}，值為：{value}。")
     if 'iterable_item_removed' in diff:
         for key in diff['iterable_item_removed']:
-            path = key.split("root")[1]  # Extracts the path
-            value = eval(f"xml1_dict{path}")
+            path = convert_path(key.split("root")[1])  
+            value = eval(f"xml1_dict{key.split('root')[1]}")
             explanations.append(f"刪除了元素於 {path}，值為：{value}。")
     if 'iterable_item_added' in diff:
         for key in diff['iterable_item_added']:
-            path = key.split("root")[1]  # Extracts the path
-            value = eval(f"xml2_dict{path}")
+            path = convert_path(key.split("root")[1])  
+            value = eval(f"xml2_dict{key.split('root')[1]}")
             explanations.append(f"新增了元素於 {path}，值為：{value}。")
     if 'type_changes' in diff:
         for key, details in ensure_dict(diff['type_changes']).items():
-            path = key.split("root")[1]  # Extracts the path
+            path = convert_path(key.split("root")[1]) 
             old_value = details['old_value']
             new_value = details['new_value']
-            if details['old_type'] == list and details['new_type'] == dict:
+            print(old_value, new_value)
+            if details['old_type'] == list and details['new_type'] == dict:  
                 removed_items = [k for k in old_value if k != new_value]
                 explanations.append(f"刪除了元素於 {path}，值為：{removed_items}。")
+                if new_value not in old_value:
+                    added_items = new_value  
+                    explanations.append(f"新增了元素於 {path}，值為：{added_items}。")
             elif details['old_type'] == dict and details['new_type'] == list:
                 added_items = [k for k in new_value if k != old_value]
                 explanations.append(f"新增了元素於 {path}，值為：{added_items}。")
+                if old_value not in new_value:
+                    removed_items = old_value 
+                    explanations.append(f"刪除了元素於 {path}，值為：{removed_items}。")
         return explanations
     return explanations
 
