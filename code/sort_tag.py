@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 不同的tag位置交換，會印出資訊
+但是不會讀text
 """
 
 import xml.etree.ElementTree as ET
@@ -11,6 +12,11 @@ def parse_xml(file):
     return root
 
 def compare_elements(element1, element2, path=""):
+    """
+    有個串列存所有的diff
+    isinstance判斷兩個路徑是否為樹
+    如果發現有不同的tag會添加到diff串列
+    """
     differences = []
 
     if not isinstance(element1, ET.Element) or not isinstance(element2, ET.Element):
@@ -18,7 +24,7 @@ def compare_elements(element1, element2, path=""):
         return differences
 
     if element1.tag != element2.tag:
-        differences.append(f"Different tags at {path}: {element1.tag} vs {element2.tag}")
+        differences.append(f"在{path}發現差異: {element1.tag} vs {element2.tag}")
         return differences
 
     path += "/" + element1.tag
@@ -27,7 +33,7 @@ def compare_elements(element1, element2, path=""):
     children2 = list(element2)
 
     if len(children1) != len(children2):
-        differences.append(f"Different number of children at {path}: {len(children1)} vs {len(children2)}")
+        differences.append(f"{path}底下的tag數量有差異: Before = {len(children1)} vs After = {len(children2)}")
         return differences
 
     tag_positions1 = [child.tag for child in children1]
@@ -36,7 +42,7 @@ def compare_elements(element1, element2, path=""):
     if tag_positions1 != tag_positions2:
         for i, (tag1, tag2) in enumerate(zip(tag_positions1, tag_positions2)):
             if tag1 != tag2:
-                differences.append(f"Tag order changed at {path}: {tag1} was swapped with {tag2}")
+                differences.append(f"Tag在{path}交換順序: {tag1} 跟 {tag2}交換")
 
     for child1, child2 in zip(children1, children2):
         differences.extend(compare_elements(child1, child2, path))

@@ -1,0 +1,27 @@
+值變更於 ['book']['author']['name']:
+從 '作者一' 改為 '作者二'。
+值變更於 ['book']['publish']['date'][1]['year']:
+從 '2021' 改為 '2022'。
+值變更於 ['book']['publish']['date'][1]['month']:
+從 '02' 改為 '03'。
+值變更於 ['book']['publish']['date'][2]['year']:
+從 '2022' 改為 '2021'。
+值變更於 ['book']['publish']['date'][2]['month']:
+從 '03' 改為 '02'。
+Differences in element counts between XML files:
+
+Texts with Differences in Changed Tags:
+
+Moved Elements and their new paths:
+/book/publish/date/year[2] moved to ['/book/publish/date/year[3]']
+/book/publish/date/month[2] moved to ['/book/publish/date/month[3]']
+/book/publish/date/year[3] moved to ['/book/publish/date/year[2]']
+/book/publish/date/month[3] moved to ['/book/publish/date/month[2]']
+
+Differences in structure and tag order:
+Tag在/book交換順序: title 跟 summary交換
+Tag在/book交換順序: author 跟 title交換
+Tag在/book交換順序: summary 跟 author交換
+在/book發現差異: title vs summary
+在/book發現差異: author vs title
+在/book發現差異: summary vs author

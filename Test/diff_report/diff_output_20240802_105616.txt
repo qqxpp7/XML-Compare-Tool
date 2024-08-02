@@ -1,0 +1,7 @@
+值變更於 /book/author/name:
+從 '作者一' 改為 '作者二'。
+值變更於 /book/publish/date/1/year:
+從 '2021' 改為 '2022'。
+值變更於 /book/publish/date/1/month:
+從 '02' 改為 '03'。
+刪除了元素於 /book/publish/date/2，值為：{'year': '2022', 'month': '03'}。
