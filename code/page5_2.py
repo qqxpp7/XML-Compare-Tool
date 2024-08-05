@@ -336,12 +336,19 @@ class ComparisonPage_2(ctk.CTkFrame):
                 name = item
             self.listbox.insert(tk.END, f"{i + 1}. {name}")        
             
-    def load_xml_content(self, file_paths):
-        if not file_paths:
-            return
-        global tree, root_element
-        tree = ET.parse(file_paths[0])
-        self.root_element = tree.getroot()
+    def load_xml_content(self):
+        self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
+        self.after_file_directory = self.find_folders_with_split(sd.after_path.get())
+        
+        self.before_file_path = self.find_file_in_directory(self.before_file_directory, self.choose_file_name)
+        self.after_file_path = self.find_file_in_directory(self.after_file_directory, self.choose_file_name)
+
+        global bf_tree, bf_root_element, af_tree, af_root_element
+        bf_tree = ET.parse(self.before_file_path[0])
+        af_tree = ET.parse(self.after_file_path[0])
+        self.bf_root_element = bf_tree.getroot()
+        self.af_root_element = af_tree.getroot()
+        
         self.display_xml_content()
         
         
