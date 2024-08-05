@@ -6,6 +6,7 @@ Created on Tue Jul 16 15:01:24 2024
 """
 import os
 import re
+import random
 import tkinter as tk
 import shared_data as sd
 import customtkinter as ctk
@@ -36,32 +37,48 @@ class ComparisonPage(ctk.CTkFrame):
 
         
         '''
-        self.mylabel = tk.Label(self.top_right_frame,  text='1/2    選擇範圍')
+        self.mylabel = tk.Label(self.top_right_frame,  text='1/2    選擇範圍', font=("Helvetica", 16))
         self.mylabel.pack(fill="both",side=tk.LEFT) 
         
         self.choose_button = ctk.CTkButton(self.top_right_frame, text="下一頁", width=200
                                          ,command = self.choose_name_file)
-        self.choose_button.pack(side=tk.RIGHT, pady=5, padx=5)
+        self.choose_button.pack(side=tk.RIGHT, pady=1, padx=1)
         '''
         中間區域
         會展示出所選擇/上傳的所有檔案名稱
         
         '''
+        self.buttons_frame = ctk.CTkFrame(self.middle_right_frame, bg_color=self.middle_right_frame.cget("bg_color"))
+        self.buttons_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.line_numbers = tk.Listbox(self.middle_right_frame, width=4, font=("Helvetica", 14))
+        self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
         
-        self.listbox = tk.Listbox(self.middle_right_frame, font=("Helvetica",14))
-        self.listbox.pack(fill="both", expand=True)
+        self.listbox = tk.Listbox(self.middle_right_frame, font=("Helvetica", 14))
+        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        self.upload_button = ctk.CTkButton(self.middle_right_frame, text="↥上傳", width=80, height=30,
-                                   font=("Helvetica", 16), command=lambda: self.upload_files_list())      
-        self.upload_button.pack(side=tk.RIGHT, pady=5, padx=5)
+        self.scrollbar = tk.Scrollbar(self.middle_right_frame, orient=tk.VERTICAL, command=self._scroll_both)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        self.download_button = ctk.CTkButton(self.middle_right_frame, text="↧下載", width=80, height=30,
-                                             font=("Helvetica", 16), command=lambda: self.download_files_list())
-        self.download_button.pack(side=tk.RIGHT, pady=5, padx=5)
+        self.listbox.config(yscrollcommand=self._sync_scroll)
+        self.line_numbers.config(yscrollcommand=self._sync_scroll)
+        self.scrollbar.config(command=self._scroll_both)
         
-        self.remove_button = ctk.CTkButton(self.middle_right_frame, text="-", width=80, height=30,
+        self.listbox.bind('<KeyRelease>', self.update_line_numbers)
+        self.listbox.bind('<MouseWheel>', self.update_line_numbers)
+        self.listbox.bind('<ButtonRelease-1>', self.update_line_numbers)
+ 
+        self.upload_button = ctk.CTkButton(self.buttons_frame, text="↥上傳", width=80, height=30,
+                                           font=("Helvetica", 14), command=self.upload_files_list)
+        self.upload_button.pack(side=tk.RIGHT, padx=5)
+
+        self.download_button = ctk.CTkButton(self.buttons_frame, text="↧下載", width=80, height=30,
+                                             font=("Helvetica", 14), command=self.download_files_list)
+        self.download_button.pack(side=tk.RIGHT, padx=5)
+
+        self.remove_button = ctk.CTkButton(self.buttons_frame, text="-", width=80, height=30,
                                            font=("Helvetica", 16), command=self.remove_filename)
-        self.remove_button.pack(side=tk.RIGHT, pady=5, padx=5)
+        self.remove_button.pack(side=tk.RIGHT, padx=5)
         '''
         下面區域
         清空舊資料的選擇
@@ -79,22 +96,25 @@ class ComparisonPage(ctk.CTkFrame):
         self.open_folder_button = ctk.CTkButton(self.bottom_right_frame, text="開啟Before、After資料夾", 
                                                 command=self.open_folder, width=200, fg_color="#CD5C5C")
         self.open_folder_button.grid(row=1, column=0, columnspan=2, pady=10, padx=10)
-        
-          
     
-    def update_listbox_numbers(self):
+    def _sync_scroll(self, *args):
+        self.line_numbers.yview_moveto(args[0])
+        self.listbox.yview_moveto(args[0])
+
+    def _scroll_both(self, *args):
+        self.line_numbers.yview(*args)
+        self.listbox.yview(*args)
+        
+    def update_line_numbers(self, event=None):
         '''
-        在刪除某一列的檔名後
-        會刷新全部的順序
+        更新數量列，並且寬度會隨著數量調整
         '''
-        items = self.listbox.get(0, tk.END)
-        self.listbox.delete(0, tk.END)
-        for i, item in enumerate(items):
-            if '. ' in item:
-                name = item.split('. ',1 )[1]  # Remove the existing numbering
-            else:
-                name = item
-            self.listbox.insert(tk.END, f"{i + 1}. {name}")
+        self.line_numbers.delete(0, tk.END)
+        line_count = self.listbox.size()
+        max_digits = len(str(line_count))
+        self.line_numbers.config(width=max_digits + 1)
+        for i in range(1, self.listbox.size() + 1):
+            self.line_numbers.insert(tk.END, str(i))      
     
     def remove_filename(self):
         '''
@@ -105,7 +125,7 @@ class ComparisonPage(ctk.CTkFrame):
         if selection:
             index = selection[0]
             self.listbox.delete(index)
-            self.update_listbox_numbers()
+            self.update_line_numbers()
             
     def find_folders_with_split(self, root_dir):
         '''
@@ -172,14 +192,14 @@ class ComparisonPage(ctk.CTkFrame):
             txt_filenames = [line.strip() for line in file.readlines()]
             
         self.listbox.delete(0, tk.END)
-        self.index = 1
-        for name in txt_filenames:
-            if name in folder_filenames:
-                self.listbox.insert(tk.END, f"{self.index}. {name}\n")
-                self.index += 1
-                
+        
         invalid_filenames = [name for name in txt_filenames if name not in folder_filenames]
-
+        valid_filenames = [name for name in txt_filenames if name in folder_filenames]
+        
+        for filename in valid_filenames:
+            self.listbox.insert(tk.END, filename)
+            self.update_line_numbers()
+            
         if invalid_filenames:
             messagebox.showwarning("Warning", f"{invalid_filenames} 不存在")
             
@@ -201,12 +221,24 @@ class ComparisonPage(ctk.CTkFrame):
         
         if self.sequence_var.get() == " 否 " and self.listbox.size() > 0:
             self.choose_file = self.process_listbox_content(self.listbox)
-            print(self.choose_file)
+            sd.choose_file = self.choose_file
+            if len(sd.choose_file) <= 5:
+                sd.choose_5_files = sd.choose_file
+            else:
+                sd.choose_5_files = random.sample(sd.choose_file, 5)
+            print(sd.choose_file)
+            print(sd.choose_5_files)
             
         else:
             self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
             self.choose_file = self.get_filenames_from_directory(self.before_file_directory)
-            print(self.choose_file)
+            sd.choose_file = self.choose_file
+            if len(sd.choose_file) <= 5:
+                sd.choose_5_files = sd.choose_file
+            else:
+                sd.choose_5_files = random.sample(sd.choose_file, 5)
+            print(sd.choose_file)
+            print(sd.choose_5_files)
             
         self.controller.show_frame("ComparisonPage_2")
        
