@@ -6,6 +6,7 @@ Created on Sun Jul 28 15:15:11 2024
 """
 import os
 import random
+import difflib
 import tkinter as tk
 import shared_data as sd
 import customtkinter as ctk
@@ -102,20 +103,17 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.buttons_frame = ctk.CTkFrame(self.rig_middle_right_frame, bg_color=self.middle_right_frame.cget("bg_color"))
         self.buttons_frame.pack(side=tk.BOTTOM, fill=tk.X)
         
-        self.line_numbers = tk.Listbox(self.rig_middle_right_frame, width=4, font=("Helvetica", 14))
-        self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
+        self.tag_numbers = tk.Listbox(self.rig_middle_right_frame, width=4, font=("Helvetica", 14))
+        self.tag_numbers.pack(side=tk.LEFT, fill=tk.Y)
         self.option_listbox = tk.Listbox(self.rig_middle_right_frame, font=("Helvetica",14))
         self.option_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.scrollbar = tk.Scrollbar(self.rig_middle_right_frame, orient=tk.VERTICAL, command=self._scroll_both)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.option_listbox.config(yscrollcommand=self._sync_scroll)
-        self.line_numbers.config(yscrollcommand=self._sync_scroll)
+        self.tag_numbers.config(yscrollcommand=self._sync_scroll)
         self.scrollbar.config(command=self._scroll_both)
         
-        self.option_listbox.bind('<KeyRelease>', self.update_line_numbers)
-        self.option_listbox.bind('<MouseWheel>', self.update_line_numbers)
-        self.option_listbox.bind('<ButtonRelease-1>', self.update_line_numbers)
         
         self.upload_button = ctk.CTkButton(self.buttons_frame, text="↥上傳", width=60, height=30,
                                    font=("Helvetica", 12), command=lambda: self.upload_file_tag())      
@@ -125,7 +123,7 @@ class ComparisonPage_2(ctk.CTkFrame):
                                              font=("Helvetica", 12), command=lambda: self.download_file_tag())
         self.download_button.pack(side=tk.LEFT, pady=5, padx=1)
                
-        self.add_button = ctk.CTkButton(self.buttons_frame, text="+", width=40, height=30)
+        self.add_button = ctk.CTkButton(self.buttons_frame, text="+", width=40, height=30, command=self.add_tag)
         self.add_button.pack(side=tk.LEFT, pady=5,padx=1)
 
         self.remove_button = ctk.CTkButton(self.buttons_frame, text="-", width=40, height=30, command=self.remove_tag)
@@ -156,28 +154,42 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.open_folder_button = ctk.CTkButton(self.bottom_right_frame, text="開啟報告" 
                                                 , width=200, fg_color="#CD5C5C")
         self.open_folder_button.grid(row=2, column=2, columnspan=2, pady=10, padx=10)
+ 
     
     def _sync_scroll(self, *args):
         self.line_numbers.yview_moveto(args[0])
+        self.tag_numbers.yview_moveto(args[0])
         self.left_listbox.yview_moveto(args[0])
         self.right_listbox.yview_moveto(args[0])
         self.option_listbox.yview_moveto(args[0])
 
     def _scroll_both(self, *args):
         self.line_numbers.yview(*args)
+        self.tag_numbers.yview(*args)
         self.left_listbox.yview(*args)
         self.right_listbox.yview(*args)
         self.option_listbox.yview(*args)
         
+    def update_tag_numbers(self, event=None):
+        '''
+        更新tag數量列，並且寬度會隨著數量調整
+        '''
+        self.tag_numbers.delete(0, tk.END)
+        tag_count = self.option_listbox.size()
+        max_digits = len(str(tag_count))
+        self.tag_numbers.config(width=max_digits + 1)
+        for i in range(1, self.option_listbox.size() + 1):
+            self.tag_numbers.insert(tk.END, str(i))
+            
     def update_line_numbers(self, event=None):
         '''
-        更新數量列，並且寬度會隨著數量調整
+        更新文件內容行數列，並且寬度會隨著數量調整
         '''
         self.line_numbers.delete(0, tk.END)
-        line_count = self.option_listbox.size()
+        line_count = max(self.left_listbox.size(), self.right_listbox.size())
         max_digits = len(str(line_count))
         self.line_numbers.config(width=max_digits + 1)
-        for i in range(1, self.option_listbox.size() + 1):
+        for i in range(1, line_count + 1):
             self.line_numbers.insert(tk.END, str(i)) 
         
     def default_input(self, frame, row, label_text, entry_width, default_text):
@@ -306,10 +318,9 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.option_listbox.delete(0, 'end')  # 清空現有的列表
         for tag in valid_tags:
             self.option_listbox.insert('end', tag)
-            self.update_line_numbers()
+            self.update_tag_numbers()
             
         messagebox.showinfo("Success", "Tags uploaded and verified successfully.")
-        
         
     def remove_tag(self):
         '''
@@ -320,47 +331,120 @@ class ComparisonPage_2(ctk.CTkFrame):
         if selection:
             index = selection[0]
             self.option_listbox.delete(index)
-            self.update_line_numbers()
+            self.update_tag_numbers()
+        else:
+            messagebox.showwarning("Warning","No selection.")
             
-    def update_listbox_numbers(self):
+    def add_tag(self):
         '''
-        在刪除某一列的檔名後
-        會刷新全部的順序
+        在option_listbox新增左邊listbox選中的tag
+
         '''
-        items = self.listbox.get(0, tk.END)
-        self.listbox.delete(0, tk.END)
-        for i, item in enumerate(items):
-            if '. ' in item:
-                name = item.split('. ',1 )[1]  # Remove the existing numbering
-            else:
-                name = item
-            self.listbox.insert(tk.END, f"{i + 1}. {name}")        
+        left_selection = self.left_listbox.curselection() 
+        right_selection = self.right_listbox.curselection()
+        
+        def get_tags_by_line(parent, parent_tag, line_number, node):
+            print("get_tags_by_line")
+            for child in parent.iter():
+                
+                if node in ET.tostring(child, encoding='unicode'):
+                    current_tag = child.tag
+                    print("current_tag:", current_tag)
+                    print("------------------")
+                    parent_tag = child.parent().tag if child.parent() is not None else None
+                    tag = f"<{parent_tag}>/<{current_tag}>"
+                    print(tag)
+                    self.option_listbox.insert(tk.END, tag)
+                    tag.delete()
+                    break
+            def find_element_and_parent_by_text(element, parent, text):
+                if text in ET.tostring(element, encoding='unicode'):
+                    for child in element:
+                        if text in ET.tostring(child, encoding='unicode'):
+                            return find_element_and_parent_by_text(child, element, text)
+                    return element, parent
+                return None
+        
+        if left_selection:
+            index = left_selection[0]
+            node = self.left_listbox.get(index)
+            print("node:", node)
+                       
+            self.update_tag_numbers()
+        elif right_selection:
+            index = right_selection[0]
+            node = self.right_listbox.get(index)
+            print("node:", node)
+                    
+            self.update_tag_numbers()
+        else:
+            messagebox.showwarning("Warning","No selection.")
+              
             
     def load_xml_content(self):
         self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
         self.after_file_directory = self.find_folders_with_split(sd.after_path.get())
-        
+        self.choose_file_name = random.choice(sd.choose_5_files)
         self.before_file_path = self.find_file_in_directory(self.before_file_directory, self.choose_file_name)
         self.after_file_path = self.find_file_in_directory(self.after_file_directory, self.choose_file_name)
 
         global bf_tree, bf_root_element, af_tree, af_root_element
-        bf_tree = ET.parse(self.before_file_path[0])
-        af_tree = ET.parse(self.after_file_path[0])
-        self.bf_root_element = bf_tree.getroot()
-        self.af_root_element = af_tree.getroot()
+        bf_tree = ET.parse(self.before_file_path)
+        af_tree = ET.parse(self.after_file_path)
+        bf_root_element = bf_tree.getroot()
+        af_root_element = af_tree.getroot()
         
         self.display_xml_content()
-        
+
         
     def display_xml_content(self):
         """
         首先刪除之前的內容，並且以階層形式展現xml
         """
         self.left_listbox.delete(0, tk.END)
+        self.right_listbox.delete(0, tk.END)
+        self.option_listbox.delete(0, tk.END)
+        self.tag_numbers.delete(0, tk.END)
+        self.line_numbers.delete(0, tk.END)
         
-        def display_node(node, indent=""):
-            self.left_listbox.insert(tk.END,  f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else ''}\n")               
+        def display_node(node, listbox, indent=""):
+            listbox.insert(tk.END,  f"{indent}{node.tag}: {node.text.strip() if node.text and node.text.strip() else ''}\n")               
             for child in node:
-                display_node(child, indent + "    ")
+                display_node(child, listbox, indent + "    ")
         
-        display_node(self.root_element)
+        display_node(bf_root_element, self.left_listbox)
+        display_node(af_root_element, self.right_listbox)
+        self.compare_files()
+         
+    def compare_files(self):
+        base_content = self.left_listbox.get(0, tk.END)
+        new_content = self.right_listbox.get(0, tk.END)
+        sm = difflib.SequenceMatcher(None, base_content, new_content)
+        opcodes = sm.get_opcodes()
+        
+        self.highlight_differences(opcodes, base_content, new_content)
+
+    def highlight_differences(self, opcodes, base, newtxt):
+        self.left_listbox.delete(0, tk.END)
+        self.right_listbox.delete(0, tk.END)
+        
+        for tag, i1, i2, j1, j2 in opcodes:
+            for i in range(i1, i2):
+                self.left_listbox.insert(tk.END, base[i])
+                if tag == 'replace':
+                    self.left_listbox.itemconfig(tk.END, {'bg':'orange'})
+                elif tag == 'delete':
+                    self.left_listbox.itemconfig(tk.END, {'bg':'red'})
+                elif tag == 'insert':
+                    self.left_listbox.insert(tk.END, "")
+                    self.left_listbox.itemconfig(tk.END, {'bg':'lightgreen'})
+            for j in range(j1, j2):
+                self.right_listbox.insert(tk.END, newtxt[j])
+                if tag == 'replace':
+                    self.right_listbox.itemconfig(tk.END, {'bg':'orange'})
+                elif tag == 'insert':
+                    self.right_listbox.itemconfig(tk.END, {'bg':'lightgreen'})
+                elif tag == 'delete':
+                    self.right_listbox.insert(tk.END, "")
+                    self.right_listbox.itemconfig(tk.END, {'bg':'red'})
+        self.update_line_numbers()

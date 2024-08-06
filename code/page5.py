@@ -7,6 +7,7 @@ Created on Tue Jul 16 15:01:24 2024
 import os
 import re
 import random
+import page5_2
 import tkinter as tk
 import shared_data as sd
 import customtkinter as ctk
@@ -60,8 +61,8 @@ class ComparisonPage(ctk.CTkFrame):
         self.scrollbar = tk.Scrollbar(self.middle_right_frame, orient=tk.VERTICAL, command=self._scroll_both)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        self.listbox.config(yscrollcommand=self._sync_scroll)
         self.line_numbers.config(yscrollcommand=self._sync_scroll)
+        self.listbox.config(yscrollcommand=self._sync_scroll)
         self.scrollbar.config(command=self._scroll_both)
         
         self.listbox.bind('<KeyRelease>', self.update_line_numbers)
@@ -240,7 +241,8 @@ class ComparisonPage(ctk.CTkFrame):
             print(sd.choose_file)
             print(sd.choose_5_files)
             
-        self.controller.show_frame("ComparisonPage_2")
+        self.controller.switch_to_page5_2()
+        # self.controller.show_frame("ComparisonPage_2")
        
                 
     def open_folder(self):

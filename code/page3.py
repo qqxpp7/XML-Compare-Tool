@@ -70,7 +70,8 @@ class XMLSplitPage(ctk.CTkFrame):
         self.scrollbar = tk.Scrollbar(self.left_middle_right_frame) 
         self.scrollbar.pack(side='right', fill='y')        
         
-        self.all_nodes_listbox = tk.Listbox(self.left_middle_right_frame, selectmode=tk.SINGLE, yscrollcommand=self.scrollbar.set, font=("Helvetica",14))
+        self.all_nodes_listbox = tk.Listbox(self.left_middle_right_frame, selectmode=tk.SINGLE,
+                                            yscrollcommand=self.scrollbar.set, font=("Helvetica",14))
         self.all_nodes_listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
                   
@@ -80,7 +81,8 @@ class XMLSplitPage(ctk.CTkFrame):
         會秀出檔案的Element及Text
         wrap=tk.NONE 禁用自動換行
         '''
-        self.text_area = scrolledtext.ScrolledText(self.mid_middle_right_frame, wrap=tk.NONE, width=50, height=20, font=("Helvetica",14))
+        self.text_area = scrolledtext.ScrolledText(self.mid_middle_right_frame, wrap=tk.NONE,
+                                                   width=50, height=20, font=("Helvetica",14))
         self.text_area.pack(fill=tk.BOTH, expand=True)
         
         self.x_scrollbar = tk.Scrollbar(self.mid_middle_right_frame, orient=tk.HORIZONTAL, command=self.text_area.xview)
