@@ -96,6 +96,11 @@ class XMLCompareTool:
         frame = self.frames[page_name]
         frame.pack(fill="both", expand=True)
         frame.tkraise()
+        
+    def switch_to_page5_2(self):
+        frame = self.frames["ComparisonPage_2"]
+        frame.load_xml_content()
+        self.show_frame("ComparisonPage_2")
 
 if __name__ == "__main__":
     root = ctk.CTk()  # 創建主窗口
