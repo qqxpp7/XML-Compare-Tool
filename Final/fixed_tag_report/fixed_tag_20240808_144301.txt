@@ -1,0 +1,24 @@
+------------------------Header ---------------------
+執行時間     :2024-08-08 14:43:01
+花費時間     :0.0010006427764892578 秒
+執行檔案      :before_split、after_split
+--------------------Input Parameter ---------------------
+檔案數量      :6
+忽略Element :[]
+--------------------內容 ---------------------
+
+File: AuthorFour_19899-06-21.xml, Result: Different
+ - Text changed in <summary> at /book: This is a brief summary of the fourth book.This is a brief summary of the fourth book.This is a brief summary of the fourth book. -> This is a brief summary of the fourth book.
+
+File: AuthorOne_1980-01-01.xml, Result: Different
+ - Added tag <publish2> at /book
+ - Added tag <month> at /book/publish
+ - Text changed in <summary> at /book: This is a brief summary of the first book.This is a brief summary of the first book.This is a brief summary of the first book. -> This is a brief summary of the first book.
+
+固定element內容都相同：
+AuthorFour_19899-06-21_2.xml
+AuthorOne_1980-01-01_2.xml
+AuthorThree_1990-11-23.xml
+AuthorTwo_1975-05-15.xml
+
+

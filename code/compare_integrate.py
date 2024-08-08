@@ -16,6 +16,10 @@ def xml_to_dict(file_path):
         return xmltodict.parse(xml_content)
 
 def find_diff(xml1_path, xml2_path):
+    '''
+    使用DeepDiff套件找出兩個檔案的差異
+    將順序也納入考量
+    '''
     xml1_dict = xml_to_dict(xml1_path)
     xml2_dict = xml_to_dict(xml2_path)
     diff = DeepDiff(xml1_dict, xml2_dict, ignore_order=0)
@@ -23,6 +27,9 @@ def find_diff(xml1_path, xml2_path):
     return diff
 
 def convert_path(path):
+    '''
+    將路徑地的分隔符號都轉成/
+    '''
     return path.replace("][", "/").replace("[", "/").replace("]", "").replace("'", "")
 
 

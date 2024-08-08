@@ -45,6 +45,20 @@ class SearchPage(ctk.CTkFrame):
         wrap=tk.NONE 禁用自動換行
         
         '''
+        self.top_middle_right_frame = ctk.CTkFrame(self.bottom_right_frame, fg_color="transparent")
+        self.top_middle_right_frame.pack(pady=5, padx=5, side="top",fill="x")
+        
+        self.replace_label = ctk.CTkLabel(self.top_middle_right_frame, fg_color='#FFE153', text='Replace',
+                                          font=("Helvetica", 14), corner_radius	= 5)
+        self.replace_label.pack(padx=2, side=tk.LEFT, fill="both", expand=True) 
+        
+        self.insert_label = ctk.CTkLabel(self.top_middle_right_frame, fg_color='lightgreen', text='Insert',
+                                         font=("Helvetica", 14), corner_radius	= 5)
+        self.insert_label.pack(padx=2, side=tk.LEFT, fill="both", expand=True)
+        
+        self.delete_label = ctk.CTkLabel(self.top_middle_right_frame, fg_color='#fd8082', text='Delete',
+                                         font=("Helvetica", 14), corner_radius	= 5)
+        self.delete_label.pack(padx=2, side=tk.LEFT, fill="both", expand=True)
         
         self.y_scrollbar = tk.Scrollbar(self.bottom_right_frame, orient=tk.VERTICAL, command=self._scroll_both)
         self.y_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -201,21 +215,21 @@ class SearchPage(ctk.CTkFrame):
             for i in range(i1, i2):
                 self.left_listbox.insert(tk.END, base[i])
                 if tag == 'replace':
-                    self.left_listbox.itemconfig(tk.END, {'bg':'orange'})
+                    self.left_listbox.itemconfig(tk.END, {'bg':'#FFE153'})
                 elif tag == 'delete':
-                    self.left_listbox.itemconfig(tk.END, {'bg':'red'})
+                    self.left_listbox.itemconfig(tk.END, {'bg':'#fd8082'})
                 elif tag == 'insert':
                     self.left_listbox.insert(tk.END, "")
                     self.left_listbox.itemconfig(tk.END, {'bg':'lightgreen'})
             for j in range(j1, j2):
                 self.right_listbox.insert(tk.END, newtxt[j])
                 if tag == 'replace':
-                    self.right_listbox.itemconfig(tk.END, {'bg':'orange'})
+                    self.right_listbox.itemconfig(tk.END, {'bg':'#FFE153'})
                 elif tag == 'insert':
                     self.right_listbox.itemconfig(tk.END, {'bg':'lightgreen'})
                 elif tag == 'delete':
                     self.right_listbox.insert(tk.END, "")
-                    self.right_listbox.itemconfig(tk.END, {'bg':'red'})
+                    self.right_listbox.itemconfig(tk.END, {'bg':'#fd8082'})
         self.update_line_numbers()
 
 

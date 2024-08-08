@@ -1,0 +1,21 @@
+------------------------Header ---------------------
+執行時間     :2024-08-08 14:47:45
+花費時間     :0.0024156570434570312 秒
+執行檔案      :before_split、after_split
+--------------------Input Parameter ---------------------
+檔案數量      :6
+忽略Element  :['<book>/<summary>']
+--------------------內容 ---------------------
+
+File: AuthorOne_1980-01-01.xml, Result: Different
+ - Added tag <publish2> at /book
+ - Added tag <month> at /book/publish
+
+固定element內容都相同：
+AuthorFour_19899-06-21.xml
+AuthorFour_19899-06-21_2.xml
+AuthorOne_1980-01-01_2.xml
+AuthorThree_1990-11-23.xml
+AuthorTwo_1975-05-15.xml
+
+

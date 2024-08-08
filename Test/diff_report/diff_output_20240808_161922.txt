@@ -1,0 +1,8 @@
+值變更於 /book/summary:
+從 'This is a brief summary of the first book.This is a brief summary of the first book.This is a brief summary of the first book.' 改為 'This is a brief summary of the first book.'。
+新增了元素於 /book/publish2，值為：{'year': '2021', 'month': '2', 'publisher': 'Publisher Two'}。
+新增了元素於 /book/publish/month，值為：1。
+
+同名稱Element移動後位置:
+
+No structural differences found.

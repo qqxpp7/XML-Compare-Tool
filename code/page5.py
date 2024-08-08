@@ -7,7 +7,6 @@ Created on Tue Jul 16 15:01:24 2024
 import os
 import re
 import random
-import page5_2
 import tkinter as tk
 import shared_data as sd
 import customtkinter as ctk
@@ -38,7 +37,7 @@ class ComparisonPage(ctk.CTkFrame):
 
         
         '''
-        self.mylabel = tk.Label(self.top_right_frame,  text='1/2    選擇範圍', font=("Helvetica", 16))
+        self.mylabel = ctk.CTkLabel(self.top_right_frame,  text='1/2    選擇範圍', font=("Helvetica", 16), corner_radius	= 10)
         self.mylabel.pack(fill="both",side=tk.LEFT) 
         
         self.choose_button = ctk.CTkButton(self.top_right_frame, text="下一頁", width=200

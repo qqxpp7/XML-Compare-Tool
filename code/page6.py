@@ -63,7 +63,7 @@ class CopyDataPage(ctk.CTkFrame):
         self.buttons_frame = ctk.CTkFrame(self.middle_right_frame, bg_color=self.middle_right_frame.cget("bg_color"))
         self.buttons_frame.pack(side=tk.BOTTOM, fill=tk.X)
         
-        self.mylabel = tk.Label(self.middle_right_frame, bg='#87CEFA', text='選擇要複製的檔案')
+        self.mylabel = ctk.CTkLabel(self.middle_right_frame, fg_color='#87CEFA', text='選擇要複製的檔案', corner_radius	= 10)
         self.mylabel.pack(fill="both",side=tk.TOP) 
         
         self.line_numbers = tk.Listbox(self.middle_right_frame, width=4, font=("Helvetica", 14))

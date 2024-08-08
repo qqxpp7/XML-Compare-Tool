@@ -38,7 +38,7 @@ class XMLSplitPage(ctk.CTkFrame):
         '''
         中間區域分三個小視窗
         ''' 
-        self.mylabel = tk.Label(self.middle_right_frame, bg='#87CEFA', text='選擇命名的key')
+        self.mylabel = ctk.CTkLabel(self.middle_right_frame, fg_color='#87CEFA', text='選擇命名的key', corner_radius	= 10)
         self.mylabel.pack(fill="both",side=tk.TOP) 
         
         self.left_middle_right_frame = ctk.CTkFrame(self.middle_right_frame)
