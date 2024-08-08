@@ -46,7 +46,7 @@ class CopyDataPage(ctk.CTkFrame):
         '''
         
         self.file_name_entry = ctk.CTkEntry(self.top_right_frame, width=300)
-        self.file_name_entry.grid(row=0, column=0, sticky="w")
+        self.file_name_entry.grid(row=0, column=0, padx=10, sticky="w")
         
         self.add_button = ctk.CTkButton(self.top_right_frame, text="+", width=100, height=30
                                         ,command=self.add_filename)
@@ -60,6 +60,9 @@ class CopyDataPage(ctk.CTkFrame):
         會展示出所選擇/上傳的所有檔案名稱
         
         '''
+        self.buttons_frame = ctk.CTkFrame(self.middle_right_frame, bg_color=self.middle_right_frame.cget("bg_color"))
+        self.buttons_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        
         self.mylabel = tk.Label(self.middle_right_frame, bg='#87CEFA', text='選擇要複製的檔案')
         self.mylabel.pack(fill="both",side=tk.TOP) 
         
@@ -67,7 +70,8 @@ class CopyDataPage(ctk.CTkFrame):
         self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
         
         self.listbox = tk.Listbox(self.middle_right_frame, font=("Helvetica",14))
-        self.listbox.pack(fill="both", expand=True)
+        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
         self.scrollbar = tk.Scrollbar(self.middle_right_frame, orient=tk.VERTICAL, command=self._scroll_both)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
@@ -79,15 +83,15 @@ class CopyDataPage(ctk.CTkFrame):
         self.listbox.bind('<MouseWheel>', self.update_line_numbers)
         self.listbox.bind('<ButtonRelease-1>', self.update_line_numbers)
         
-        self.upload_button = ctk.CTkButton(self.middle_right_frame, text="↥上傳", width=80, height=30,
+        self.upload_button = ctk.CTkButton(self.buttons_frame, text="↥上傳", width=80, height=30,
                                    font=("Helvetica", 16), command=lambda: self.upload_files_list())      
         self.upload_button.pack(side=tk.RIGHT, pady=5, padx=5)
         
-        self.download_button = ctk.CTkButton(self.middle_right_frame, text="↧下載", width=80, height=30,
+        self.download_button = ctk.CTkButton(self.buttons_frame, text="↧下載", width=80, height=30,
                                              font=("Helvetica", 16), command=lambda: self.download_files_list())
         self.download_button.pack(side=tk.RIGHT, pady=5, padx=5)
         
-        self.remove_button = ctk.CTkButton(self.middle_right_frame, text="-", width=80, height=30,
+        self.remove_button = ctk.CTkButton(self.buttons_frame, text="-", width=80, height=30,
                                            font=("Helvetica", 16), command=self.remove_filename)
         self.remove_button.pack(side=tk.RIGHT, pady=5, padx=5)
         '''
