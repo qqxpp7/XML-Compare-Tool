@@ -63,8 +63,21 @@ class CopyDataPage(ctk.CTkFrame):
         self.mylabel = tk.Label(self.middle_right_frame, bg='#87CEFA', text='選擇要複製的檔案')
         self.mylabel.pack(fill="both",side=tk.TOP) 
         
+        self.line_numbers = tk.Listbox(self.middle_right_frame, width=4, font=("Helvetica", 14))
+        self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
+        
         self.listbox = tk.Listbox(self.middle_right_frame, font=("Helvetica",14))
         self.listbox.pack(fill="both", expand=True)
+        self.scrollbar = tk.Scrollbar(self.middle_right_frame, orient=tk.VERTICAL, command=self._scroll_both)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.line_numbers.config(yscrollcommand=self._sync_scroll)
+        self.listbox.config(yscrollcommand=self._sync_scroll)
+        self.scrollbar.config(command=self._scroll_both)
+        
+        self.listbox.bind('<KeyRelease>', self.update_line_numbers)
+        self.listbox.bind('<MouseWheel>', self.update_line_numbers)
+        self.listbox.bind('<ButtonRelease-1>', self.update_line_numbers)
         
         self.upload_button = ctk.CTkButton(self.middle_right_frame, text="↥上傳", width=80, height=30,
                                    font=("Helvetica", 16), command=lambda: self.upload_files_list())      
@@ -95,7 +108,25 @@ class CopyDataPage(ctk.CTkFrame):
                                                 command=self.open_copy_folder, width=200, fg_color="#CD5C5C")
         self.open_copy_folder_button.grid(row=1, column=0, columnspan=2, pady=10, padx=10)
 
+    def _sync_scroll(self, *args):
+        self.line_numbers.yview_moveto(args[0])
+        self.listbox.yview_moveto(args[0])
 
+    def _scroll_both(self, *args):
+        self.line_numbers.yview(*args)
+        self.listbox.yview(*args)
+        
+    def update_line_numbers(self, event=None):
+        '''
+        更新數量列，並且寬度會隨著數量調整
+        '''
+        self.line_numbers.delete(0, tk.END)
+        line_count = self.listbox.size()
+        max_digits = len(str(line_count))
+        self.line_numbers.config(width=max_digits + 1)
+        for i in range(1, self.listbox.size() + 1):
+            self.line_numbers.insert(tk.END, str(i)) 
+            
     def find_folders_with_split(self, root_dir):
         '''
         找到資料夾下的split資料夾，如果沒找到就返回原本資料夾
@@ -147,7 +178,8 @@ class CopyDataPage(ctk.CTkFrame):
             # Copy 'after' file to target directory and rename it
             self.copy_and_rename(file_name, after_file_directory, '_after.xml', result_directory)
     
-    
+        messagebox.showinfo("Success", "成功複製")
+        
     def copy_and_rename(self, file_name, source_directory, suffix, result_directory):
         '''
         主功能二： Copy file from source directory to target directory and rename it
@@ -161,6 +193,7 @@ class CopyDataPage(ctk.CTkFrame):
                 os.path.join(result_directory, file_name),
                 os.path.join(result_directory, file_name.replace('.xml', suffix))
             )
+            
         except Exception as e:
             os.remove(os.path.join(result_directory, file_name))
             print("Error", f"An unexpected error occurred: {e}")
@@ -189,16 +222,6 @@ class CopyDataPage(ctk.CTkFrame):
                 file.write(name + '\n')
         os.startfile(file_path)
     
-    def update_listbox_numbers(self):
-        '''
-        在刪除某一列的檔名後
-        會刷新全部的順序
-        '''
-        items = self.listbox.get(0, tk.END)
-        self.listbox.delete(0, tk.END)
-        for i, item in enumerate(items):
-            clean_item = item.split('. ', 1)[1] if '. ' in item else item
-            self.listbox.insert(tk.END, f"{i + 1}. {clean_item}")
             
     def upload_files_list(self):
         '''
@@ -221,12 +244,11 @@ class CopyDataPage(ctk.CTkFrame):
             txt_filenames = [line.strip() for line in file.readlines()]
             
         self.listbox.delete(0, tk.END)
-        self.index = 1
 
         for name in txt_filenames:
             if name in folder_filenames:
-                self.listbox.insert(tk.END, f"{self.index}. {name}\n")
-                self.index += 1
+                self.listbox.insert(tk.END, f"{name}\n")
+                self.update_line_numbers()
                 
         invalid_filenames = [name for name in txt_filenames if name not in folder_filenames]
 
@@ -252,8 +274,8 @@ class CopyDataPage(ctk.CTkFrame):
         if clean_file_name in folder_filenames:
             listbox_items = [item.split('. ', 1)[1] if '. ' in item else item for item in self.listbox.get(0, tk.END)]
             if clean_file_name not in listbox_items:
-                self.listbox.insert(tk.END, f"{len(listbox_items) + 1}. {clean_file_name}")
-                self.update_listbox_numbers()
+                self.listbox.insert(tk.END, f"{clean_file_name}")
+                self.update_line_numbers()
             else:
                 tk.messagebox.showwarning("Warning", "已經有相同的項目")
         else:
@@ -264,7 +286,7 @@ class CopyDataPage(ctk.CTkFrame):
         if selection:
             index = selection[0]
             self.listbox.delete(index)
-            self.update_listbox_numbers()
+            self.update_line_numbers()
         
     def clear_directory(self, directory):
         '''
@@ -280,9 +302,9 @@ class CopyDataPage(ctk.CTkFrame):
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)  # 刪除資料夾
                 except Exception as e:
-                    print(f'刪除 {file_path} 時發生錯誤: {e}')
+                    messagebox.showerror("Error",f'刪除 {file_path} 時發生錯誤: {e}')
         else:
-            print(f"指定的資料夾 {directory} 不存在")
+            messagebox.showerror("Error",f"指定的資料夾 {directory} 不存在")
     
     def open_copy_folder(self):
         '''
@@ -290,16 +312,15 @@ class CopyDataPage(ctk.CTkFrame):
         '''
         try:
             if not os.path.exists(self.result_directory):
-                self.messagebox.showinfo("錯誤", f"目錄 {self.result_directory} 不存在。")
-    
-            # 不同操作系統有不同的開啟資料夾方式
+                messagebox.showerror("Error", f"目錄 {self.result_directory} 不存在。")
+
             if os.name == 'nt':  # Windows
                 os.startfile(self.result_directory)
             else:
-                self.messagebox.showinfo("錯誤", "不支援的操作系統。")
+                messagebox.showerror("Error", "不支援的操作系統。")
                 
         except Exception as e:
-            self.messagebox.showinfo("錯誤", f"發生錯誤: {e}")
+            messagebox.showerror("Error", f"發生錯誤: {e}")
 
 
 
