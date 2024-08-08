@@ -32,35 +32,47 @@ def convert_path(path):
     '''
     return path.replace("][", "/").replace("[", "/").replace("]", "").replace("'", "")
 
+def format_issue_path(path):
+    '''
+    將有差異tag的path都存為<>/<>格式
+    '''
+    parts = path.split("/")
+    return f"<{parts[-2]}>/<{parts[-1]}>"
 
 def parse_diff(diff, xml1_dict, xml2_dict):
     explanations = []
+    issues = []
     if 'values_changed' in diff:
         for key, details in diff['values_changed'].items():
             path = convert_path(key.split("root")[1])
             old_value = details['old_value']
             new_value = details['new_value']
             explanations.append(f"值變更於 {path}:\n從 '{old_value}' 改為 '{new_value}'。")
+            issues.append(format_issue_path(path))
     if 'dictionary_item_removed' in diff:
         for key in diff['dictionary_item_removed']:
             path = convert_path(key.split("root")[1])  
             value = eval(f"xml1_dict{key.split('root')[1]}")
             explanations.append(f"刪除了元素於 {path}，值為：{value}。")
+            issues.append(format_issue_path(path))
     if 'dictionary_item_added' in diff:
         for key in diff['dictionary_item_added']:
             path = convert_path(key.split("root")[1])  
             value = eval(f"xml2_dict{key.split('root')[1]}")
             explanations.append(f"新增了元素於 {path}，值為：{value}。")
+            issues.append(format_issue_path(path))
     if 'iterable_item_removed' in diff:
         for key in diff['iterable_item_removed']:
             path = convert_path(key.split("root")[1])  
             value = eval(f"xml1_dict{key.split('root')[1]}")
             explanations.append(f"刪除了元素於 {path}，值為：{value}。")
+            issues.append(format_issue_path(path))
     if 'iterable_item_added' in diff:
         for key in diff['iterable_item_added']:
             path = convert_path(key.split("root")[1])  
             value = eval(f"xml2_dict{key.split('root')[1]}")
             explanations.append(f"新增了元素於 {path}，值為：{value}。")
+            issues.append(format_issue_path(path))
     if 'type_changes' in diff:
         for key, details in ensure_dict(diff['type_changes']).items():
             path = convert_path(key.split("root")[1]) 
@@ -79,8 +91,9 @@ def parse_diff(diff, xml1_dict, xml2_dict):
                 if old_value not in new_value:
                     removed_items = old_value 
                     explanations.append(f"刪除了元素於 {path}，值為：{removed_items}。")
-        return explanations
-    return explanations
+            issues.append(format_issue_path(path))
+        return explanations, issues
+    return explanations, issues
 
 
 def ensure_dict(items):
@@ -201,8 +214,8 @@ def analyze_deepdiff(before_file, after_file):
     使用DeepDiff來比較兩個XML字典
     '''
     diff_result = find_diff(before_file, after_file)
-    explanations = parse_diff(diff_result, xml_to_dict(before_file), xml_to_dict(after_file))
-    return explanations
+    explanations, issues = parse_diff(diff_result, xml_to_dict(before_file), xml_to_dict(after_file))
+    return explanations, issues
 
 def analyze_element_count(before_root, after_root):
     '''
@@ -246,17 +259,20 @@ def analyze_structure(before_root, after_root):
     
     return results
 
-def save_results_to_file(results, file_path):
+def save_results_to_file(file_path, *results_lists):
     with open(file_path, "w", encoding="utf-8") as file:
-        for result in results:
-            file.write(result + "\n")
+        for results in results_lists:
+            if results:  # 檢查列表是否有資料
+                for result in results:
+                    file.write(result + "\n")
+        
 
 def main(before_file, after_file):
     before_root = parse_xml(before_file)
     after_root = parse_xml(after_file)
 
     # 使用DeepDiff來比較兩個XML字典
-    deepdiff_explanations = analyze_deepdiff(before_file, after_file)
+    deepdiff_explanations, issues = analyze_deepdiff(before_file, after_file)
 
     # 比較標籤位置和出現次數
     element_count_results = analyze_element_count(before_root, after_root)
@@ -270,8 +286,7 @@ def main(before_file, after_file):
     os.makedirs(repeat_new_folder, exist_ok=True)
     file_path = os.path.join(repeat_new_folder, f"diff_output_{current_time}.txt")
 
-    all_results = deepdiff_explanations + element_count_results + structure_results
-    save_results_to_file(all_results, file_path)
+    save_results_to_file(file_path, deepdiff_explanations, element_count_results, structure_results, issues)
 
 if __name__ == "__main__":
     before_file = r"C:\Users\a9037\OneDrive\文件\GitHub\XML-Compare-Tool\Before\before_split\AuthorOne_1980-01-01.xml"  # 这里替换成实际的文件路径
