@@ -5,13 +5,16 @@ Created on Sun Jul 28 15:15:11 2024
 @author: a9037
 """
 import os
+import time
 import random
 import difflib
 import tkinter as tk
 import shared_data as sd
+from pathlib import Path
 import customtkinter as ctk
+from datetime import datetime
 import xml.etree.ElementTree as ET
-from tkinter import ttk, messagebox, filedialog
+from tkinter import messagebox, filedialog
 
 class ComparisonPage_2(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -33,12 +36,24 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.bottom_right_frame = ctk.CTkFrame(self)
         self.bottom_right_frame.pack(pady=5, padx=10, fill="x")
         
-        #右中左-中中-中右
+        
         '''
         中間區域分兩個小視窗
         ''' 
-        self.mylabel = tk.Label(self.middle_right_frame, bg='#87CEFA', text='選擇忽略或比對的key')
-        self.mylabel.pack(fill="both",side=tk.TOP) 
+        self.top_middle_right_frame = ctk.CTkFrame(self.middle_right_frame, fg_color="transparent")
+        self.top_middle_right_frame.pack(pady=5, padx=5, side="top",fill="x")
+        
+        self.replace_label = ctk.CTkLabel(self.top_middle_right_frame, fg_color='#FFE153', text='Replace',
+                                          font=("Helvetica", 14), corner_radius	= 5)
+        self.replace_label.pack(padx=2, side=tk.LEFT, fill="both", expand=True) 
+        
+        self.insert_label = ctk.CTkLabel(self.top_middle_right_frame, fg_color='lightgreen', text='Insert',
+                                         font=("Helvetica", 14), corner_radius	= 5)
+        self.insert_label.pack(padx=2, side=tk.LEFT, fill="both", expand=True)
+        
+        self.delete_label = ctk.CTkLabel(self.top_middle_right_frame, fg_color='#fd8082', text='Delete',
+                                         font=("Helvetica", 14), corner_radius	= 5)
+        self.delete_label.pack(padx=2, side=tk.LEFT, fill="both", expand=True)
         
         self.left_middle_right_frame = ctk.CTkFrame(self.middle_right_frame)
         self.left_middle_right_frame.pack(pady=5, padx=5, side="left", fill="both", expand=True)
@@ -50,16 +65,15 @@ class ComparisonPage_2(ctk.CTkFrame):
         上面區域
         
         '''
-        self.mylabel = tk.Label(self.top_right_frame,  text='2/2    選擇Element', font=("Helvetica", 16))
-        self.mylabel.pack(fill="both",side=tk.LEFT) 
+        self.label = ctk.CTkLabel(self.top_right_frame,  text='2/2    選擇Element', font=("Helvetica", 16), corner_radius	= 10)
+        self.label.pack(side=tk.LEFT, fill="both") 
         
-        self.choose_button = ctk.CTkButton(self.top_right_frame, text="執行", width=200)
-                                         
+        self.choose_button = ctk.CTkButton(self.top_right_frame, text="執行", width=200
+                                           , command=lambda: self.execute())
         self.choose_button.pack(side=tk.RIGHT, pady=5, padx=5)
         
         self.return_button = ctk.CTkButton(self.top_right_frame, text="上一頁", width=200
                                          , command=lambda: self.controller.show_frame("ComparisonPage"))
-        
         self.return_button.pack(side=tk.LEFT, pady=5, padx=5)
         
         #右中左
@@ -140,12 +154,12 @@ class ComparisonPage_2(ctk.CTkFrame):
                                                     , "報告書名稱：", 400, "Compare_Report")
         
         self.sequence_label = ctk.CTkLabel(self.bottom_right_frame, text="比對模式：")
-        self.sequence_label.grid(row=1, column=0, pady=10, padx=20, sticky="w")
+        self.sequence_label.grid(row=1, column=0, pady=5, padx=20, sticky="w")
 
         self.sequence_var = tk.StringVar(value=" 忽略 ")
         self.sequence_options = ctk.CTkSegmentedButton(master=self.bottom_right_frame,
                                                        values=[" 比對 ", " 忽略 "], variable=self.sequence_var)
-        self.sequence_options.grid(row=1, column=1, pady=10, padx=10, sticky="w")
+        self.sequence_options.grid(row=1, column=1, pady=5, padx=10, sticky="w")
 
         self.open_folder_button = ctk.CTkButton(self.bottom_right_frame, text="AI分析" 
                                                 , width=200, fg_color="#CD5C5C")
@@ -242,7 +256,8 @@ class ComparisonPage_2(ctk.CTkFrame):
     def download_file_tag(self):
         '''
         下載隨機一份選擇檔案內所有的tag及它的上一層
-        
+        get_tags()解析XML文件並提取標籤和上一層標籤
+        將結果寫入再Final底下的Compare_file_tag.txt，並自動開啟
         '''
         self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
         
@@ -250,7 +265,6 @@ class ComparisonPage_2(ctk.CTkFrame):
         
         self.file_path = self.find_file_in_directory(self.before_file_directory, self.choose_file_name)
         
-        # 解析XML文件並提取標籤和上一層標籤
         tree = ET.parse(self.file_path)
         root = tree.getroot()
         
@@ -262,21 +276,20 @@ class ComparisonPage_2(ctk.CTkFrame):
         
         get_tags(root, root.tag)
 
-        # 將結果寫入文本檔案
         output_file_path = os.path.join(sd.report_output_path.get(), 'Compare_file_tag.txt')
-        
         with open(output_file_path, 'w', encoding='utf-8') as f:
             print(self.choose_file_name)
             for tag in tags:
                 f.write(f"{tag}\n")
-        
-        # 自動開啟生成的文件
         os.startfile(output_file_path)
 
     
     def upload_file_tag(self):
         '''
         上傳並檢查txt文件格式及內容
+        find_file_in_directory()獲取self.choose_file內所有檔案的標籤
+        檢查上傳的標籤是否都存在於所有檔案的標籤內
+        若所有標籤都符合，將其顯示在self.option_listbox
         '''
         self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
         
@@ -289,7 +302,6 @@ class ComparisonPage_2(ctk.CTkFrame):
         with open(txt_file_path, 'r', encoding='utf-8') as f:
             uploaded_tags = [line.strip() for line in f if line.strip()]
        
-        # 獲取self.choose_file內所有檔案的標籤
         all_tags = set()
         for file_name in sd.choose_5_files:
             full_path = self.find_file_in_directory(self.before_file_directory, file_name)
@@ -302,7 +314,6 @@ class ComparisonPage_2(ctk.CTkFrame):
                         get_all_tags(child, child.tag)
                 get_all_tags(root, root.tag)
 
-        # 檢查上傳的標籤是否都存在於所有檔案的標籤內
         valid_tags = []
         invalid_tags = []
         for tag in uploaded_tags:
@@ -314,8 +325,7 @@ class ComparisonPage_2(ctk.CTkFrame):
         if invalid_tags:
             messagebox.showwarning("Warning", f"Some tags are not found in the XML files and will be ignored: {', '.join(invalid_tags)}")
 
-        # 若所有標籤都符合，將其顯示在self.option_listbox
-        self.option_listbox.delete(0, 'end')  # 清空現有的列表
+        self.option_listbox.delete(0, 'end')  
         for tag in valid_tags:
             self.option_listbox.insert('end', tag)
             self.update_tag_numbers()
@@ -334,7 +344,8 @@ class ComparisonPage_2(ctk.CTkFrame):
             self.update_tag_numbers()
         else:
             messagebox.showwarning("Warning","No selection.")
-            
+    
+        
     def add_tag(self):
         '''
         在option_listbox新增左邊listbox選中的tag
@@ -343,43 +354,38 @@ class ComparisonPage_2(ctk.CTkFrame):
         left_selection = self.left_listbox.curselection() 
         right_selection = self.right_listbox.curselection()
         
-        def get_tags_by_line(parent, parent_tag, line_number, node):
-            print("get_tags_by_line")
-            for child in parent.iter():
-                
-                if node in ET.tostring(child, encoding='unicode'):
-                    current_tag = child.tag
-                    print("current_tag:", current_tag)
-                    print("------------------")
-                    parent_tag = child.parent().tag if child.parent() is not None else None
-                    tag = f"<{parent_tag}>/<{current_tag}>"
-                    print(tag)
-                    self.option_listbox.insert(tk.END, tag)
-                    tag.delete()
-                    break
-            def find_element_and_parent_by_text(element, parent, text):
-                if text in ET.tostring(element, encoding='unicode'):
-                    for child in element:
-                        if text in ET.tostring(child, encoding='unicode'):
-                            return find_element_and_parent_by_text(child, element, text)
-                    return element, parent
-                return None
-        
         if left_selection:
-            index = left_selection[0]
-            node = self.left_listbox.get(index)
-            print("node:", node)
-                       
+            selected_text = self.left_listbox.get(left_selection)
+            self.extract_and_add_tag(selected_text, bf_root_element)
+            
             self.update_tag_numbers()
         elif right_selection:
-            index = right_selection[0]
-            node = self.right_listbox.get(index)
-            print("node:", node)
+            selected_text = self.right_listbox.get(right_selection)
+            self.extract_and_add_tag(selected_text, af_root_element)
                     
             self.update_tag_numbers()
         else:
             messagebox.showwarning("Warning","No selection.")
-              
+            
+    def extract_and_add_tag(self, selected_text, root_element):
+        '''
+        提取選中的標籤名稱
+        遍歷節點來找到相應的節點和它的父節點
+        在加入前先檢查是否已存在，如果標籤已存在，會彈出警告訊息
+        '''
+        tag_name = selected_text.strip().split(":")[0].strip()
+        self.find_and_add_tag(root_element, tag_name)
+
+    def find_and_add_tag(self, node, tag_name, parent_tag=None):
+        
+        if node.tag == tag_name and parent_tag is not None:
+            formatted_tag = f"<{parent_tag}>/<{node.tag}>"
+            if formatted_tag not in self.option_listbox.get(0, tk.END):
+                self.option_listbox.insert(tk.END, formatted_tag)
+            else:
+                messagebox.showwarning("重複標籤", f"標籤 '{formatted_tag}' 已經存在於列表中！")
+        for child in node:
+            self.find_and_add_tag(child, tag_name, node.tag)   
             
     def load_xml_content(self):
         self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
@@ -432,19 +438,176 @@ class ComparisonPage_2(ctk.CTkFrame):
             for i in range(i1, i2):
                 self.left_listbox.insert(tk.END, base[i])
                 if tag == 'replace':
-                    self.left_listbox.itemconfig(tk.END, {'bg':'orange'})
+                    self.left_listbox.itemconfig(tk.END, {'bg':'#FFE153'})
                 elif tag == 'delete':
-                    self.left_listbox.itemconfig(tk.END, {'bg':'red'})
+                    self.left_listbox.itemconfig(tk.END, {'bg':'#fd8082'})
                 elif tag == 'insert':
                     self.left_listbox.insert(tk.END, "")
                     self.left_listbox.itemconfig(tk.END, {'bg':'lightgreen'})
             for j in range(j1, j2):
                 self.right_listbox.insert(tk.END, newtxt[j])
                 if tag == 'replace':
-                    self.right_listbox.itemconfig(tk.END, {'bg':'orange'})
+                    self.right_listbox.itemconfig(tk.END, {'bg':'#FFE153'})
                 elif tag == 'insert':
                     self.right_listbox.itemconfig(tk.END, {'bg':'lightgreen'})
                 elif tag == 'delete':
                     self.right_listbox.insert(tk.END, "")
-                    self.right_listbox.itemconfig(tk.END, {'bg':'red'})
+                    self.right_listbox.itemconfig(tk.END, {'bg':'#fd8082'})
         self.update_line_numbers()
+    
+    def read_exclude_tags(self):
+        '''
+        讀取listbox要刪除的tag
+        '''
+        exclude_tags = [self.option_listbox.get(idx) for idx in range(self.option_listbox.size())]
+        print("exclude_tags: ", exclude_tags)
+        return exclude_tags
+
+    def clean_tag(self, tag):
+        return tag.strip('<>')
+
+    def remove_excluded_tags(self, root, exclude_tags):
+        '''
+        將tag從資料刪除
+        '''
+        for tag_path in exclude_tags:
+            parent_tag, child_tag = map(self.clean_tag, tag_path.split('/'))
+            if parent_tag == root.tag:
+                parents = [root]
+            else:
+                parents = root.findall(f'.//{parent_tag}')
+            for parent in parents:
+                for child in parent.findall(child_tag):
+                    parent.remove(child)
+        return root
+
+    def get_filtered_xml_content(self, xml_path, exclude_tags):
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        root = self.remove_excluded_tags(root, exclude_tags)
+        return ET.tostring(root, encoding='unicode')
+
+    def compare_elements(self, element1, element2, path=''):
+        changes = []
+        if element1.tag != element2.tag:
+            changes.append(f'Tag changed from <{element1.tag}> to <{element2.tag}> at {path}')
+        if element1.text != element2.text:
+            changes.append(f'Text changed in <{element1.tag}> at {path}: {element1.text} -> {element2.text}')
+        
+        children1 = list(element1)
+        children2 = list(element2)
+        
+        tags1 = {child.tag for child in children1}
+        tags2 = {child.tag for child in children2}
+        
+        added_tags = tags2 - tags1
+        removed_tags = tags1 - tags2
+        
+        for tag in added_tags:
+            changes.append(f'Added tag <{tag}> at {path}/{element1.tag}')
+        for tag in removed_tags:
+            changes.append(f'Removed tag <{tag}> at {path}/{element1.tag}')
+        
+        common_tags = tags1 & tags2
+        for tag in common_tags:
+            child1 = element1.find(tag)
+            child2 = element2.find(tag)
+            if child1 is not None and child2 is not None:
+                sub_changes = self.compare_elements(child1, child2, path=f'{path}/{element1.tag}')
+                changes.extend(sub_changes)
+        
+        return changes
+    
+    def compare_xml_files(self, folder1, folder2, exclude_tags):
+        folder1 = Path(folder1)
+        folder2 = Path(folder2)
+        
+        results = []
+        matches = []
+        
+        for file1 in folder1.glob('*.xml'):
+            file2 = folder2 / file1.name
+            if file2.exists():
+                content1 = self.get_filtered_xml_content(file1, exclude_tags)
+                content2 = self.get_filtered_xml_content(file2, exclude_tags)
+                
+                root1 = ET.fromstring(content1)
+                root2 = ET.fromstring(content2)
+                
+                if content1 == content2:
+                    matches.append(file1.name)
+                else:
+                    changes = self.compare_elements(root1, root2)
+                    results.append((file1.name, 'Different', changes))
+            else:
+                results.append((file1.name, 'Missing in folder2'))
+        
+        return results, matches
+    
+    def print_fixedtag_file(self, file_path, exclude_tags, results, matches):
+        
+         # 在Final底下新建fixed_tag_report，將拆分後重複文件放在那
+        
+        TIME_START = time.time()
+        with open(file_path, 'a', encoding='utf-8') as file:
+            TIME_END = time.time()
+            file.write("------------------------Header ---------------------\n")
+            file.write(f"執行時間     :{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            file.write(f"花費時間     :{TIME_END - TIME_START} 秒\n")
+            file.write("執行檔案      :before_split、after_split\n")
+            file.write("--------------------Input Parameter ---------------------\n")
+            file.write(f"檔案數量      :{len(results) + len(matches)}\n")
+            file.write(f"忽略Element  :{exclude_tags}\n")
+            file.write("--------------------內容 ---------------------\n")
+            
+            for res in results:
+               file.write(f"\nFile: {res[0]}, Result: {res[1]}\n")
+               if res[1] == 'Different':
+                   for change in res[2]:
+                       file.write(f" - {change}\n")
+           
+            file.write("\n固定element內容都相同：\n")
+            for match in matches:
+                file.write(f"{match}\n")
+            file.write("\n\n")
+        
+        if os.name == 'nt':
+            os.startfile(file_path)
+    
+    def print_changedtag_file(self, file_path, changed_tags, *results_lists):
+        
+         # 在Final底下新建fixed_tag_report，將拆分後重複文件放在那
+        
+        TIME_START = time.time()
+        with open(file_path, 'a', encoding='utf-8') as file:
+            TIME_END = time.time()
+            file.write("------------------------Header ---------------------\n")
+            file.write(f"執行時間     :{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            file.write(f"花費時間     :{TIME_END - TIME_START} 秒\n")
+            file.write("執行檔案      :before_split、after_split\n")
+            file.write("--------------------Input Parameter ---------------------\n")
+            # file.write(f"檔案數量      :{len(results) + len(matches)}\n")
+            file.write(f"變動Element  :{changed_tags}\n")
+            file.write("--------------------內容 ---------------------\n")
+            
+            for results in results_lists:
+                if results:  # 檢查列表是否有資料
+                    for result in results:
+                        file.write(result + "\n")
+        
+        if os.name == 'nt':
+            os.startfile(file_path)
+            
+    def execute(self):
+        exclude_tags = self.read_exclude_tags()
+        print(exclude_tags)
+        self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
+        self.after_file_directory = self.find_folders_with_split(sd.after_path.get())
+        
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        fixed_tag_new_folder = os.path.join(sd.report_output_path.get(), "fixed_tag_report")
+        os.makedirs(fixed_tag_new_folder, exist_ok=True)
+        file_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.txt")
+
+        results, matches = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
+        self.print_fixedtag_file(file_path, exclude_tags, results, matches)
