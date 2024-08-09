@@ -7,14 +7,15 @@ Created on Wed Aug  7 09:46:47 2024
 
 import os
 import time
-from lxml import etree
 from pathlib import Path
 from datetime import datetime
 import xml.etree.ElementTree as ET
-from collections import defaultdict
 
 
 def read_exclude_tags(file_path):
+    '''
+    讀取要刪除的tag
+    '''
     with open(file_path, 'r', encoding='utf-8') as file:
         lines = file.readlines()
     exclude_tags = [line.strip() for line in lines]
@@ -25,6 +26,9 @@ def clean_tag(tag):
     return tag.strip('<>')
 
 def remove_excluded_tags(root, exclude_tags):
+    '''
+    將tag從資料刪除
+    '''
     for tag_path in exclude_tags:
         parent_tag, child_tag = map(clean_tag, tag_path.split('/'))
         if parent_tag == root.tag:
@@ -40,7 +44,6 @@ def get_filtered_xml_content(xml_path, exclude_tags):
     tree = ET.parse(xml_path)
     root = tree.getroot()
     root = remove_excluded_tags(root, exclude_tags)
-    # print("root: ", ET.tostring(root, encoding='unicode'))
     return ET.tostring(root, encoding='unicode')
 
 def compare_elements(element1, element2, path=''):
@@ -92,7 +95,7 @@ def compare_xml_files(folder1, folder2, exclude_tags):
             root2 = ET.fromstring(content2)
             
             if content1 == content2:
-                matches.append((file1.name, '固定element內容都相同'))
+                matches.append(file1.name)
             else:
                 changes = compare_elements(root1, root2)
                 results.append((file1.name, 'Different', changes))
@@ -102,11 +105,9 @@ def compare_xml_files(folder1, folder2, exclude_tags):
     return results, matches
             
 
-
 def print_fixedtag_file(file_path, exclude_tags, file_name, results, matches):
     
      # 在Final底下新建fixed_tag_report，將拆分後重複文件放在那
-    
     
     TIME_START = time.time()
     with open(file_path, 'a', encoding='utf-8') as file:
@@ -121,14 +122,14 @@ def print_fixedtag_file(file_path, exclude_tags, file_name, results, matches):
         file.write("--------------------內容 ---------------------\n")
         
         for res in results:
-            file.write(f"File: {res[0]}, Result: {res[1]}\n")
-            if res[1] == 'Different':
-                for change in res[2]:
-                    file.write(f" - {change}\n")
-        
+           file.write(f"\nFile: {res[0]}, Result: {res[1]}\n")
+           if res[1] == 'Different':
+               for change in res[2]:
+                   file.write(f" - {change}\n")
+       
+        file.write("\n固定element內容都相同：\n")
         for match in matches:
-            file.write(f"File: {match[0]}, Result: {match[1]}\n")
-        
+            file.write(f"{match}\n")
         file.write("\n\n")
     
     if os.name == 'nt':

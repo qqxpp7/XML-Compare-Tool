@@ -143,10 +143,9 @@ class FindDifferencesPage(ctk.CTkFrame):
         
     def print_file(self, file_name, file_path, move="無" ) :
         TIME_START = time.time()
-        TIME_END = time.time()
-        
+                
         with open(file_path, 'a') as file:
-                                
+            TIME_END = time.time()                    
             file.write("------------------------Header ---------------------\n")
             file.write(f"執行時間     :{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             file.write(f"花費時間     :{TIME_START-TIME_END} 秒\n")                    

@@ -370,22 +370,26 @@ class ComparisonPage_2(ctk.CTkFrame):
     def extract_and_add_tag(self, selected_text, root_element):
         '''
         提取選中的標籤名稱
-        遍歷節點來找到相應的節點和它的父節點
-        在加入前先檢查是否已存在，如果標籤已存在，會彈出警告訊息
         '''
         tag_name = selected_text.strip().split(":")[0].strip()
         self.find_and_add_tag(root_element, tag_name)
 
-    def find_and_add_tag(self, node, tag_name, parent_tag=None):
-        
-        if node.tag == tag_name and parent_tag is not None:
+    def find_and_add_tag(self, node, tag_name, parent_tag="root", path=""):
+        '''
+        提取選中的標籤名稱
+        遍歷節點來找到相應的節點和它的父節點
+        在加入前先檢查是否已存在，如果標籤已存在，會彈出警告訊息
+        '''
+        current_path = f"{path}/{node.tag}" if path else node.tag
+
+        if node.tag == tag_name and current_path.endswith(f"{parent_tag}/{tag_name}"):
             formatted_tag = f"<{parent_tag}>/<{node.tag}>"
             if formatted_tag not in self.option_listbox.get(0, tk.END):
                 self.option_listbox.insert(tk.END, formatted_tag)
             else:
                 messagebox.showwarning("重複標籤", f"標籤 '{formatted_tag}' 已經存在於列表中！")
         for child in node:
-            self.find_and_add_tag(child, tag_name, node.tag)   
+            self.find_and_add_tag(child, tag_name, node.tag, current_path)   
             
     def load_xml_content(self):
         self.before_file_directory = self.find_folders_with_split(sd.before_path.get())

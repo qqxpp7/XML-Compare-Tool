@@ -206,11 +206,18 @@ class XMLSplitPage(ctk.CTkFrame):
 
         
     def load_xml_content(self, file_paths):
+        '''
+        載入xml的內容
+        '''
         if not file_paths:
             return
         global tree, root_element
         tree = ET.parse(file_paths[0])
         self.root_element = tree.getroot()
+        
+        # for elem in self.root_element.iter():
+        #     elem.tag = elem.tag.split('}', 1)[-1]
+
         self.populate_all_nodes_list()
         self.display_xml_content()
         self.split_element_entry.delete(0, tk.END)
@@ -467,9 +474,9 @@ class XMLSplitPage(ctk.CTkFrame):
         
         ''' 
         TIME_START = time.time()
-        TIME_END = time.time()
+        
         with open(file_path, 'a') as file:
-                                
+            TIME_END = time.time()                   
             file.write("------------------------Header ---------------------\n")
             file.write(f"執行時間     :{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             file.write(f"花費時間     :{TIME_START-TIME_END} 秒\n")                    

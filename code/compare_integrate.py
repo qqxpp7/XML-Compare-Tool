@@ -1,6 +1,7 @@
 import os
-import xml.etree.ElementTree as ET
+import time
 import xmltodict
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from collections import defaultdict
 from deepdiff import DeepDiff
@@ -237,7 +238,7 @@ def analyze_element_count(before_root, after_root):
     # for text, paths in diff_texts.items():
     #     results.append(f"在{paths}的Text: {text} ")
     
-    results.append("\n同名稱Element移動後位置:")
+    # results.append("\n同名稱Element移動後位置:\n")
     for before_path, after_paths in moved_elements.items():
         results.append(f"Before：{before_path} After：{after_paths}")
     
@@ -251,22 +252,54 @@ def analyze_structure(before_root, after_root):
     results = []
 
     if differences_structure:
-        results.append("\n不同名稱Element位置交換:")
+        # results.append("\n不同名稱Element位置交換:\n")
         for difference in differences_structure:
             results.append(difference)
-    else:
-        results.append("\nNo structural differences found.")
+    
     
     return results
 
-def save_results_to_file(file_path, *results_lists):
-    with open(file_path, "w", encoding="utf-8") as file:
-        for results in results_lists:
-            if results:  # 檢查列表是否有資料
-                for result in results:
-                    file.write(result + "\n")
+# def save_results_to_file(file_path, *results_lists):
+#     with open(file_path, "w", encoding="utf-8") as file:
+#         for results in results_lists:
+#             if results:  # 檢查列表是否有資料
+#                 for result in results:
+#                     file.write(result + "\n")
         
-
+def print_changedtag_file( file_path, deepdiff_explanations, element_count_results, structure_results, issues):
+    
+     # 在Final底下新建fixed_tag_report，將拆分後重複文件放在那
+    
+    TIME_START = time.time()
+    with open(file_path, 'a', encoding='utf-8') as file:
+        TIME_END = time.time()
+        file.write("------------------------Header ---------------------\n")
+        file.write(f"執行時間     :{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        file.write(f"花費時間     :{TIME_END - TIME_START} 秒\n")
+        file.write("執行檔案      :before_split、after_split\n")
+        file.write("--------------------Input Parameter ---------------------\n")
+        # file.write(f"檔案數量      :{len(results) + len(matches)}\n")
+        file.write(f"變動Element  :{issues}\n")
+        file.write("--------------------內容 ---------------------\n")
+        
+        for result in deepdiff_explanations:
+            if result:  # 檢查列表是否有資料            
+                    file.write(result + "\n")
+                    
+        for result in element_count_results:
+            if result:  # 檢查列表是否有資料   
+                file.write("\n同名稱Element移動後位置:\n")    
+                file.write(result + "\n") 
+                
+        for result in structure_results:
+            if result:  # 檢查列表是否有資料   
+                file.write("\n不同名稱Element位置交換:\n")    
+                file.write(result + "\n") 
+                
+                
+    if os.name == 'nt':
+        os.startfile(file_path)
+        
 def main(before_file, after_file):
     before_root = parse_xml(before_file)
     after_root = parse_xml(after_file)
@@ -282,11 +315,11 @@ def main(before_file, after_file):
 
     # 將所有結果保存到一個文本檔案中
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    repeat_new_folder = os.path.join(r"C:\Users\a9037\OneDrive\文件\GitHub\XML-Compare-Tool\Test", "diff_report")
-    os.makedirs(repeat_new_folder, exist_ok=True)
-    file_path = os.path.join(repeat_new_folder, f"diff_output_{current_time}.txt")
+    change_tag_new_folder = os.path.join(r"C:\Users\a9037\OneDrive\文件\GitHub\XML-Compare-Tool\Test", "diff_report")
+    os.makedirs(change_tag_new_folder, exist_ok=True)
+    file_path = os.path.join(change_tag_new_folder, f"diff_output_{current_time}.txt")
 
-    save_results_to_file(file_path, deepdiff_explanations, element_count_results, structure_results, issues)
+    print_changedtag_file(file_path, deepdiff_explanations, element_count_results, structure_results, issues)
 
 if __name__ == "__main__":
     before_file = r"C:\Users\a9037\OneDrive\文件\GitHub\XML-Compare-Tool\Before\before_split\AuthorOne_1980-01-01.xml"  # 这里替换成实际的文件路径
