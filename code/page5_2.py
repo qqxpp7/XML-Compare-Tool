@@ -435,8 +435,14 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.highlight_differences(opcodes, base_content, new_content)
 
     def highlight_differences(self, opcodes, base, newtxt):
+        '''
+        replace:{'bg':'#FFE153'}
+        insert:{'bg':'lightgreen'}
+        delete:{'bg':'#fd8082'}
+        '''
         self.left_listbox.delete(0, tk.END)
         self.right_listbox.delete(0, tk.END)
+        
         
         for tag, i1, i2, j1, j2 in opcodes:
             for i in range(i1, i2):
