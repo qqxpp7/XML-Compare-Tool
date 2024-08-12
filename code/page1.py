@@ -211,26 +211,79 @@ class SearchPage(ctk.CTkFrame):
         self.left_listbox.delete(0, tk.END)
         self.right_listbox.delete(0, tk.END)
         
+        base_index = 0
+        new_index = 0
+        
         for tag, i1, i2, j1, j2 in opcodes:
-            for i in range(i1, i2):
-                self.left_listbox.insert(tk.END, base[i])
-                if tag == 'replace':
-                    self.left_listbox.itemconfig(tk.END, {'bg':'#FFE153'})
-                elif tag == 'delete':
-                    self.left_listbox.itemconfig(tk.END, {'bg':'#fd8082'})
-                elif tag == 'insert':
-                    self.left_listbox.insert(tk.END, "")
-                    self.left_listbox.itemconfig(tk.END, {'bg':'lightgreen'})
-            for j in range(j1, j2):
-                self.right_listbox.insert(tk.END, newtxt[j])
-                if tag == 'replace':
-                    self.right_listbox.itemconfig(tk.END, {'bg':'#FFE153'})
-                elif tag == 'insert':
-                    self.right_listbox.itemconfig(tk.END, {'bg':'lightgreen'})
-                elif tag == 'delete':
+            while base_index < i1 or new_index < j1:
+                if base_index < i1 and new_index < j1:
+                    self.left_listbox.insert(tk.END, base[base_index])
+                    self.right_listbox.insert(tk.END, newtxt[new_index])
+                    base_index += 1
+                    new_index += 1
+                elif base_index < i1:
+                    self.left_listbox.insert(tk.END, base[base_index])
                     self.right_listbox.insert(tk.END, "")
-                    self.right_listbox.itemconfig(tk.END, {'bg':'#fd8082'})
-        self.update_line_numbers()
+                    self.right_listbox.itemconfig(tk.END, {'bg':'grey'})
+                    base_index += 1
+                elif new_index < j1:
+                    self.right_listbox.insert(tk.END, newtxt[new_index])
+                    self.left_listbox.insert(tk.END, "")
+                    self.left_listbox.itemconfig(tk.END, {'bg':'grey'})
+                    new_index += 1
+            
+            if tag == 'replace':
+                max_lines = max(i2 - i1, j2 - j1)
+                for i in range(max_lines):
+                    if i1 + i < i2:
+                        self.left_listbox.insert(tk.END, base[i1 + i])
+                        self.left_listbox.itemconfig(tk.END, {'bg':'#FFE153'})
+                    else:
+                        self.left_listbox.insert(tk.END, "")
+                        self.left_listbox.itemconfig(tk.END, {'bg':'grey'})
+                    
+                    if j1 + i < j2:
+                        self.right_listbox.insert(tk.END, newtxt[j1 + i])
+                        self.right_listbox.itemconfig(tk.END, {'bg':'#FFE153'})
+                    else:
+                        self.right_listbox.insert(tk.END, "")
+                        self.right_listbox.itemconfig(tk.END, {'bg':'grey'})
+                
+                base_index = i2
+                new_index = j2
+            elif tag == 'delete':
+                for i in range(i1, i2):
+                    self.left_listbox.insert(tk.END, base[i])
+                    self.left_listbox.itemconfig(tk.END, {'bg':'#fd8082'})
+                for _ in range(i1, i2):
+                    self.right_listbox.insert(tk.END, "")
+                    self.right_listbox.itemconfig(tk.END, {'bg':'grey'})
+                base_index = i2
+            elif tag == 'insert':
+                for j in range(j1, j2):
+                    self.right_listbox.insert(tk.END, newtxt[j])
+                    self.right_listbox.itemconfig(tk.END, {'bg':'lightgreen'})
+                for _ in range(j1, j2):
+                    self.left_listbox.insert(tk.END, "")
+                    self.left_listbox.itemconfig(tk.END, {'bg':'grey'})
+                new_index = j2
+        
+        while base_index < len(base) or new_index < len(newtxt):
+            if base_index < len(base) and new_index < len(newtxt):
+                self.left_listbox.insert(tk.END, base[base_index])
+                self.right_listbox.insert(tk.END, newtxt[new_index])
+                base_index += 1
+                new_index += 1
+            elif base_index < len(base):
+                self.left_listbox.insert(tk.END, base[base_index])
+                self.right_listbox.insert(tk.END, "")
+                self.right_listbox.itemconfig(tk.END, {'bg':'grey'})
+                base_index += 1
+            elif new_index < len(newtxt):
+                self.right_listbox.insert(tk.END, newtxt[new_index])
+                self.left_listbox.insert(tk.END, "")
+                self.left_listbox.itemconfig(tk.END, {'bg':'grey'})
+                new_index += 1
 
 
 
