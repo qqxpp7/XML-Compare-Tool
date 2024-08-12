@@ -19,11 +19,12 @@ def xml_to_dict(file_path):
 def find_diff(xml1_path, xml2_path):
     '''
     使用DeepDiff套件找出兩個檔案的差異
-    將順序也納入考量
+    順序不納入考量，如果有element交換位置
+    會在analyze_element_count印出來
     '''
     xml1_dict = xml_to_dict(xml1_path)
     xml2_dict = xml_to_dict(xml2_path)
-    diff = DeepDiff(xml1_dict, xml2_dict, ignore_order=0)
+    diff = DeepDiff(xml1_dict, xml2_dict, ignore_order=1)
     pprint(diff, indent=2)
     return diff
 
@@ -36,11 +37,28 @@ def convert_path(path):
 def format_issue_path(path):
     '''
     將有差異tag的path都存為<>/<>格式
+    確保最後兩個標籤不是數字
     '''
     parts = path.split("/")
-    return f"<{parts[-2]}>/<{parts[-1]}>"
+    last_tag = ""
+    second_last_tag = ""
+    
+    for part in reversed(parts):
+        if not last_tag and not part.isdigit():
+            last_tag = part
+        elif not second_last_tag and not part.isdigit():
+            second_last_tag = part
+        if last_tag and second_last_tag:
+            break
+        
+    return f"<{second_last_tag}>/<{last_tag}>"
 
 def parse_diff(diff, xml1_dict, xml2_dict):
+    '''
+    比對兩個xml的差異
+    分別有值變更、刪除、新增
+    type_changes是字典變串列or串列變字典會出現的情況
+    '''
     explanations = []
     issues = []
     if 'values_changed' in diff:
@@ -155,37 +173,44 @@ def compare_elements_count(before_count, after_count, before_values, after_value
 
     return differences, moved_elements
 
-def find_differences_in_text(before_values, after_values, differences):
-    diff_texts = defaultdict(list)
-    all_texts = set(before_values.keys()).union(set(after_values.keys()))
 
-    for text in all_texts:
-        if text in before_values and text in after_values:
-            before_paths = before_values[text]
-            after_paths = after_values[text]
-            for path in before_paths:
-                if path in differences:
-                    diff_texts[text].append(path)
-            for path in after_paths:
-                if path in differences:
-                    diff_texts[text].append(path)
-        elif text in before_values or text in after_values:
-            paths = before_values.get(text, []) + after_values.get(text, [])
-            for path in paths:
-                if path in differences:
-                    diff_texts[text].append(path)
 
-    return diff_texts
+def analyze_deepdiff(before_file, after_file):
+    '''
+    使用DeepDiff來比較兩個XML字典
+    '''
+    diff_result = find_diff(before_file, after_file)
+    explanations, issues = parse_diff(diff_result, xml_to_dict(before_file), xml_to_dict(after_file))
+    return explanations, issues
+
+def analyze_element_count(before_root, after_root):
+    '''
+    同名稱Element交換位置
+    比較標籤位置和出現次數
+    '''
+    before_count, before_path_dict, before_values = count_elements(before_root)
+    after_count, after_path_dict, after_values = count_elements(after_root)
+
+    differences_count, moved_elements = compare_elements_count(before_count, after_count, before_values, after_values)
+
+    results = []
+    
+    for before_path, after_paths in moved_elements.items():
+        results.append(f"Before：{before_path} After：{after_paths}")
+    
+    return results
 
 def compare_elements_structure(element1, element2, path=""):
+    '''
+    不同名稱Element交換位置
+    比較結構和標籤順序
+    數量有差異不理會->屬於刪除、新增的部分
+    數量一樣->刪除A，新增B，並且有交換位置也會列出
+    數量有差異又交換->
+    '''
     differences = []
 
-    if not isinstance(element1, ET.Element) or not isinstance(element2, ET.Element):
-        differences.append(f"One of the compared elements is not a valid XML Element: {path}")
-        return differences
-
     if element1.tag != element2.tag:
-        # differences.append(f"在{path}發現差異: {element1.tag} vs {element2.tag}")
         return differences
 
     path += "/" + element1.tag
@@ -194,7 +219,6 @@ def compare_elements_structure(element1, element2, path=""):
     children2 = list(element2)
 
     if len(children1) != len(children2):
-        # differences.append(f"{path}底下的tag數量有差異: Before = {len(children1)} vs After = {len(children2)}")
         return differences
 
     tag_positions1 = [child.tag for child in children1]
@@ -210,66 +234,26 @@ def compare_elements_structure(element1, element2, path=""):
 
     return differences
 
-def analyze_deepdiff(before_file, after_file):
-    '''
-    使用DeepDiff來比較兩個XML字典
-    '''
-    diff_result = find_diff(before_file, after_file)
-    explanations, issues = parse_diff(diff_result, xml_to_dict(before_file), xml_to_dict(after_file))
-    return explanations, issues
-
-def analyze_element_count(before_root, after_root):
-    '''
-    比較標籤位置和出現次數
-    '''
-    before_count, before_path_dict, before_values = count_elements(before_root)
-    after_count, after_path_dict, after_values = count_elements(after_root)
-
-    differences_count, moved_elements = compare_elements_count(before_count, after_count, before_values, after_values)
-    diff_texts = find_differences_in_text(before_values, after_values, differences_count)
-
-    results = []
-    
-    # results.append("Differences in element counts between XML files:")
-    # for path, (before, after) in differences_count.items():
-    #     results.append(f"{path}: before={before}, after={after}")
-
-    # results.append("\nTexts with Differences in Changed Tags:")
-    # for text, paths in diff_texts.items():
-    #     results.append(f"在{paths}的Text: {text} ")
-    
-    # results.append("\n同名稱Element移動後位置:\n")
-    for before_path, after_paths in moved_elements.items():
-        results.append(f"Before：{before_path} After：{after_paths}")
-    
-    return results
-
 def analyze_structure(before_root, after_root):
     '''
-    比較結構和標籤順序
+    確認有出現不同名稱Element交換位置
+    將結果都存到results
     '''
     differences_structure = compare_elements_structure(before_root, after_root)
     results = []
 
     if differences_structure:
-        # results.append("\n不同名稱Element位置交換:\n")
         for difference in differences_structure:
             results.append(difference)
     
-    
     return results
 
-# def save_results_to_file(file_path, *results_lists):
-#     with open(file_path, "w", encoding="utf-8") as file:
-#         for results in results_lists:
-#             if results:  # 檢查列表是否有資料
-#                 for result in results:
-#                     file.write(result + "\n")
         
-def print_changedtag_file( file_path, deepdiff_explanations, element_count_results, structure_results, issues):
+def print_changedtag_file(file_path, deepdiff_explanations, element_count_results, structure_results, issues):
+    '''
+    在Final底下新建fixed_changedtag_report，將拆分後重複文件放在那
     
-     # 在Final底下新建fixed_tag_report，將拆分後重複文件放在那
-    
+    '''
     TIME_START = time.time()
     with open(file_path, 'a', encoding='utf-8') as file:
         TIME_END = time.time()
@@ -281,20 +265,26 @@ def print_changedtag_file( file_path, deepdiff_explanations, element_count_resul
         # file.write(f"檔案數量      :{len(results) + len(matches)}\n")
         file.write(f"變動Element  :{issues}\n")
         file.write("--------------------內容 ---------------------\n")
+        has_element_count = False
+        has_structure_change = False
         
         for result in deepdiff_explanations:
-            if result:  # 檢查列表是否有資料            
-                    file.write(result + "\n")
+            if result:        
+                file.write(result + "\n")
                     
         for result in element_count_results:
-            if result:  # 檢查列表是否有資料   
-                file.write("\n同名稱Element移動後位置:\n")    
-                file.write(result + "\n") 
+            if result:  
+                if not has_element_count:  
+                    file.write("\n同名稱Element移動後位置:\n")
+                    has_element_count = True
+                file.write(result + "\n")
                 
         for result in structure_results:
-            if result:  # 檢查列表是否有資料   
-                file.write("\n不同名稱Element位置交換:\n")    
-                file.write(result + "\n") 
+            if result:     
+                if not has_structure_change:  
+                    file.write("\n不同名稱Element位置交換:\n")
+                    has_structure_change = True
+                file.write(result + "\n")
                 
                 
     if os.name == 'nt':
@@ -320,6 +310,32 @@ def main(before_file, after_file):
     file_path = os.path.join(change_tag_new_folder, f"diff_output_{current_time}.txt")
 
     print_changedtag_file(file_path, deepdiff_explanations, element_count_results, structure_results, issues)
+
+def find_differences_in_text(before_values, after_values, differences):
+    '''
+    目前沒有使用
+    找出字的差異
+    '''
+    diff_texts = defaultdict(list)
+    all_texts = set(before_values.keys()).union(set(after_values.keys()))
+
+    for text in all_texts:
+        if text in before_values and text in after_values:
+            before_paths = before_values[text]
+            after_paths = after_values[text]
+            for path in before_paths:
+                if path in differences:
+                    diff_texts[text].append(path)
+            for path in after_paths:
+                if path in differences:
+                    diff_texts[text].append(path)
+        elif text in before_values or text in after_values:
+            paths = before_values.get(text, []) + after_values.get(text, [])
+            for path in paths:
+                if path in differences:
+                    diff_texts[text].append(path)
+
+    return diff_texts
 
 if __name__ == "__main__":
     before_file = r"C:\Users\a9037\OneDrive\文件\GitHub\XML-Compare-Tool\Before\before_split\AuthorOne_1980-01-01.xml"  # 这里替换成实际的文件路径
