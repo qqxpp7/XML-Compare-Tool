@@ -8,6 +8,7 @@ import os
 import time
 import random
 import difflib
+import pandas as pd
 import tkinter as tk
 import shared_data as sd
 from pathlib import Path
@@ -427,6 +428,10 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.compare_files()
          
     def compare_files(self):
+        '''
+        將左右listbox的內容用difflib比較
+        之後會呼叫highlight_differences，將差異的部分用顏色區分出來
+        '''
         base_content = self.left_listbox.get(0, tk.END)
         new_content = self.right_listbox.get(0, tk.END)
         sm = difflib.SequenceMatcher(None, base_content, new_content)
@@ -521,7 +526,8 @@ class ComparisonPage_2(ctk.CTkFrame):
     
     def read_exclude_tags(self):
         '''
-        讀取listbox要刪除的tag
+        讀取option_listbox要刪除的tag
+        可能是AI推薦或者是手動加入/上傳的tag
         '''
         exclude_tags = [self.option_listbox.get(idx) for idx in range(self.option_listbox.size())]
         print("exclude_tags: ", exclude_tags)
@@ -545,7 +551,11 @@ class ComparisonPage_2(ctk.CTkFrame):
                     parent.remove(child)
         return root
 
+
     def get_filtered_xml_content(self, xml_path, exclude_tags):
+        '''
+        得到刪除變動element的樹
+        '''
         tree = ET.parse(xml_path)
         root = tree.getroot()
         root = self.remove_excluded_tags(root, exclude_tags)
@@ -554,9 +564,9 @@ class ComparisonPage_2(ctk.CTkFrame):
     def compare_elements(self, element1, element2, path=''):
         changes = []
         if element1.tag != element2.tag:
-            changes.append(f'Tag changed from <{element1.tag}> to <{element2.tag}> at {path}')
+            changes.append((path, "Tag changed", f'from <{element1.tag}> to <{element2.tag}>'))
         if element1.text != element2.text:
-            changes.append(f'Text changed in <{element1.tag}> at {path}: {element1.text} -> {element2.text}')
+            changes.append((path, "Text changed", f'{element1.text} -> {element2.text}'))
         
         children1 = list(element1)
         children2 = list(element2)
@@ -568,9 +578,9 @@ class ComparisonPage_2(ctk.CTkFrame):
         removed_tags = tags1 - tags2
         
         for tag in added_tags:
-            changes.append(f'Added tag <{tag}> at {path}/{element1.tag}')
+            changes.append((f'{path}/{element1.tag}', "Tag added", f'<{tag}>'))
         for tag in removed_tags:
-            changes.append(f'Removed tag <{tag}> at {path}/{element1.tag}')
+            changes.append((f'{path}/{element1.tag}', "Tag deleted", f'<{tag}>'))
         
         common_tags = tags1 & tags2
         for tag in common_tags:
@@ -582,7 +592,11 @@ class ComparisonPage_2(ctk.CTkFrame):
         
         return changes
     
+    
     def compare_xml_files(self, folder1, folder2, exclude_tags):
+        '''
+        比較刪除變動element的樹
+        '''
         folder1 = Path(folder1)
         folder2 = Path(folder2)
         
@@ -602,17 +616,15 @@ class ComparisonPage_2(ctk.CTkFrame):
                     matches.append(file1.name)
                 else:
                     changes = self.compare_elements(root1, root2)
-                    results.append((file1.name, 'Different', changes))
+                    results.append((file1.name, changes))
             else:
                 results.append((file1.name, 'Missing in folder2'))
         
         return results, matches
     
     def print_fixedtag_file(self, file_path, exclude_tags, results, matches):
-        
-         # 在Final底下新建fixed_tag_report，將拆分後重複文件放在那
-        
         TIME_START = time.time()
+        
         with open(file_path, 'a', encoding='utf-8') as file:
             TIME_END = time.time()
             file.write("------------------------Header ---------------------\n")
@@ -621,23 +633,43 @@ class ComparisonPage_2(ctk.CTkFrame):
             file.write("執行檔案      :before_split、after_split\n")
             file.write("--------------------Input Parameter ---------------------\n")
             file.write(f"檔案數量      :{len(results) + len(matches)}\n")
-            file.write(f"忽略Element  :{exclude_tags}\n")
+            file.write(f"忽略Element :{exclude_tags}\n")
             file.write("--------------------內容 ---------------------\n")
             
             for res in results:
-               file.write(f"\nFile: {res[0]}, Result: {res[1]}\n")
-               if res[1] == 'Different':
-                   for change in res[2]:
-                       file.write(f" - {change}\n")
-           
+                file.write(f"File: {res[0]}, Result: Different\n")
+                for change in res[1]:
+                    file.write(f" - Path: {change[0]}, Type: {change[1]}, Detail: {change[2]}\n")
+            
             file.write("\n固定element內容都相同：\n")
             for match in matches:
-                file.write(f"{match}\n")
+                file.write(f"File: {match}\n")
+            
             file.write("\n\n")
         
         if os.name == 'nt':
             os.startfile(file_path)
     
+    
+    def export_to_excel(self, results, excel_file_path):
+        rows = []
+        serial_number = 1
+        
+        for res in results:
+            file_name = res[0]
+            changes = res[1]
+            for change in changes:
+                path, change_type, detail = change
+                rows.append([serial_number, file_name, path, change_type, detail])
+                serial_number += 1
+        
+        df = pd.DataFrame(rows, columns=['流水號', '檔案名稱', 'Path', 'Type', '差異的Text'])
+        df.to_excel(excel_file_path, index=False)
+        print(f'Excel report generated at: {excel_file_path}')
+        
+        if os.name == 'nt':
+            os.startfile(excel_file_path)
+        
     def print_changedtag_file(self, file_path, changed_tags, *results_lists):
         
          # 在Final底下新建fixed_tag_report，將拆分後重複文件放在那
@@ -672,6 +704,8 @@ class ComparisonPage_2(ctk.CTkFrame):
         fixed_tag_new_folder = os.path.join(sd.report_output_path.get(), "fixed_tag_report")
         os.makedirs(fixed_tag_new_folder, exist_ok=True)
         file_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.txt")
+        exl_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.xlsx")
 
         results, matches = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
         self.print_fixedtag_file(file_path, exclude_tags, results, matches)
+        self.export_to_excel(results, exl_path)
