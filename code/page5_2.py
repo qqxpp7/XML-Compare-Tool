@@ -7,11 +7,11 @@ Created on Sun Jul 28 15:15:11 2024
 import os
 import time
 import random
-import difflib
+import difflib #相同element
 import pandas as pd
 import tkinter as tk
 import shared_data as sd
-from pathlib import Path
+from pathlib import Path #變色
 import customtkinter as ctk
 from datetime import datetime
 import xml.etree.ElementTree as ET
@@ -147,12 +147,9 @@ class ComparisonPage_2(ctk.CTkFrame):
         
         '''
         下面區域
-        清空舊資料的選擇
-        開啟COPY資料夾的按鈕
         
         '''
-        self.report_name_entry = self.default_input(self.bottom_right_frame, 0
-                                                    , "報告書名稱：", 400, "Compare_Report")
+        self.report_name_entry = self.default_input(self.bottom_right_frame, 0, "報告書名稱：", 400, "Compare_Report")
         
         self.sequence_label = ctk.CTkLabel(self.bottom_right_frame, text="比對模式：")
         self.sequence_label.grid(row=1, column=0, pady=5, padx=20, sticky="w")
@@ -162,12 +159,10 @@ class ComparisonPage_2(ctk.CTkFrame):
                                                        values=[" 比對 ", " 忽略 "], variable=self.sequence_var)
         self.sequence_options.grid(row=1, column=1, pady=5, padx=10, sticky="w")
 
-        self.open_folder_button = ctk.CTkButton(self.bottom_right_frame, text="AI分析" 
-                                                , width=200, fg_color="#CD5C5C")
+        self.open_folder_button = ctk.CTkButton(self.bottom_right_frame, text="AI分析" , width=200, fg_color="#CD5C5C")
         self.open_folder_button.grid(row=2, column=0, columnspan=2, pady=10, padx=10)
         
-        self.open_folder_button = ctk.CTkButton(self.bottom_right_frame, text="開啟報告" 
-                                                , width=200, fg_color="#CD5C5C")
+        self.open_folder_button = ctk.CTkButton(self.bottom_right_frame, text="開啟報告" , width=200, fg_color="#CD5C5C")
         self.open_folder_button.grid(row=2, column=2, columnspan=2, pady=10, padx=10)
  
     
@@ -246,7 +241,6 @@ class ComparisonPage_2(ctk.CTkFrame):
         :param filename: 檔案名稱
         :return: 檔案的完整路徑（如果找到），否則返回 None
         """
-        # 檢查檔案是否存在於指定資料夾
         for root, dirs, files in os.walk(directory):
             for file in files:
                if file.startswith(filename) and file.endswith('.xml'):
@@ -538,7 +532,7 @@ class ComparisonPage_2(ctk.CTkFrame):
 
     def remove_excluded_tags(self, root, exclude_tags):
         '''
-        將tag從資料刪除
+        將tag從原本xml結構樹刪除
         '''
         for tag_path in exclude_tags:
             parent_tag, child_tag = map(self.clean_tag, tag_path.split('/'))
@@ -560,36 +554,67 @@ class ComparisonPage_2(ctk.CTkFrame):
         root = tree.getroot()
         root = self.remove_excluded_tags(root, exclude_tags)
         return ET.tostring(root, encoding='unicode')
+    
+    def convert_path_format(self, element, index, parent_path=''):
+        '''
+        將excel內的path欄位更改成
+        {attribute}parent[index]/child[index]
+        如果沒有屬性{attribute}會被忽略
+        '''
+        tag_name = element.tag
+        attribute_string = ''
 
-    def compare_elements(self, element1, element2, path=''):
+        if element.attrib:
+            attributes = ', '.join(f'{k}="{v}"' for k, v in element.attrib.items())
+            attribute_string = f'{{attribute: {attributes}}}'
+
+        full_path = f'{parent_path}/{tag_name}[{index}]'.strip('/')
+
+        return f'{attribute_string}/{full_path}'
+    
+    def get_tag_description(self, element):
+        """
+        當新增或刪除一個包含多個element的母element時
+        需要去讀取它每個tag及text
+        """
+        
+        def recurse(elem):
+           desc = elem.tag
+           if len(elem):
+               desc += '/' + '/'.join(recurse(child) for child in elem)
+           return desc
+       
+        return recurse(element)
+    
+    def compare_elements(self, element1, element2, parent_path='', index=0):
         changes = []
+        current_path = self.convert_path_format(element1, index, parent_path)
+        
         if element1.tag != element2.tag:
-            changes.append((path, "Tag changed", f'from <{element1.tag}> to <{element2.tag}>'))
+            changes.append((current_path, "Tag changed", f'from <{element1.tag}> to <{element2.tag}>', '', ''))
         if element1.text != element2.text:
-            changes.append((path, "Text changed", f'{element1.text} != {element2.text}'))
+            changes.append((current_path, "Text changed", '', '', f'{element1.text} -> {element2.text}'))
+        if element1.attrib != element2.attrib:
+            changes.append((current_path, "Attribute changed", '', '', f'{element1.attrib} -> {element2.attrib}'))
         
         children1 = list(element1)
         children2 = list(element2)
         
-        tags1 = {child.tag for child in children1}
-        tags2 = {child.tag for child in children2}
+        max_len = max(len(children1), len(children2))
         
-        added_tags = tags2 - tags1
-        removed_tags = tags1 - tags2
-        
-        for tag in added_tags:
-            changes.append((f'{path}/{element1.tag}/<{tag}>', "Tag added", element2.find(tag).text or ''))
-        for tag in removed_tags:
-            changes.append((f'{path}/{element1.tag}/<{tag}>', "Tag deleted", element1.find(tag).text or ''))
-        
-        common_tags = tags1 & tags2
-        for tag in common_tags:
-            child1 = element1.find(tag)
-            child2 = element2.find(tag)
-            if child1 is not None and child2 is not None:
-                sub_changes = self.compare_elements(child1, child2, path=f'{path}/{element1.tag}')
+        for i in range(max_len):
+            if i < len(children1) and i < len(children2):
+                sub_changes = self.compare_elements(children1[i], children2[i], current_path, i)
                 changes.extend(sub_changes)
-        
+            elif i < len(children1):
+                sub_path = self.convert_path_format(children1[i], i, current_path)
+                description = self.get_tag_description(children1[i])
+                changes.append((sub_path, "Tag deleted", description, '', children1[i].text or ''))
+            elif i < len(children2):
+                sub_path = self.convert_path_format(children2[i], i, current_path)
+                description = self.get_tag_description(children2[i])
+                changes.append((sub_path, "Tag added", description, '', children2[i].text or ''))
+
         return changes
     
     
@@ -623,6 +648,9 @@ class ComparisonPage_2(ctk.CTkFrame):
         return results, matches
     
     def print_fixedtag_file(self, file_path, exclude_tags, results, matches):
+        '''
+        印固定element的詳細txt檔案
+        '''
         TIME_START = time.time()
         
         with open(file_path, 'a', encoding='utf-8') as file:
@@ -636,34 +664,38 @@ class ComparisonPage_2(ctk.CTkFrame):
             file.write(f"忽略Element :{exclude_tags}\n")
             file.write("--------------------內容 ---------------------\n")
             
-            for res in results:
-                file.write(f"File: {res[0]}, Result: Different\n")
-                for change in res[1]:
-                    file.write(f" - Path: {change[0]}, Type: {change[1]}, Detail: {change[2]}\n")
-            
             file.write("\n固定element內容都相同：\n")
             for match in matches:
                 file.write(f"File: {match}\n")
             
             file.write("\n\n")
-        
+            
+            for res in results:
+                file.write(f"File: {res[0]}, Result: Different\n")
+                for change in res[1]:
+                    file.write(f" - Path: {change[0]}, Type: {change[1]}, Description: {change[2]}, Value: {change[4]}\n")
+            
         if os.name == 'nt':
             os.startfile(file_path)
     
     
     def export_to_excel(self, results, excel_file_path):
+        '''
+        印出excel檔案
+        分別有流水號、檔名(key)、xmlpath、差異類型(type)
+        '''
         rows = []
         serial_number = 1
-        
+       
         for res in results:
-            file_name = res[0]
-            changes = res[1]
-            for change in changes:
-                path, change_type, detail = change
-                rows.append([serial_number, file_name, path, change_type, detail])
+           file_name = res[0]
+           changes = res[1]
+           for change in changes:
+                path, change_type, description, _, value = change
+                rows.append([serial_number, file_name, path, change_type, description, value])
                 serial_number += 1
         
-        df = pd.DataFrame(rows, columns=['', 'Key', 'Path', 'Type', 'Value'])
+        df = pd.DataFrame(rows, columns=['', 'Key', 'Path', 'Type', 'Description', 'Value'])
         df.to_excel(excel_file_path, index=False)
         print(f'Excel report generated at: {excel_file_path}')
         
@@ -671,9 +703,9 @@ class ComparisonPage_2(ctk.CTkFrame):
             os.startfile(excel_file_path)
         
     def print_changedtag_file(self, file_path, changed_tags, *results_lists):
-        
-         # 在Final底下新建fixed_tag_report，將拆分後重複文件放在那
-        
+        '''
+          在Final底下新建changed_tag_report，將異動element的報告印在那
+        '''
         TIME_START = time.time()
         with open(file_path, 'a', encoding='utf-8') as file:
             TIME_END = time.time()
@@ -687,7 +719,7 @@ class ComparisonPage_2(ctk.CTkFrame):
             file.write("--------------------內容 ---------------------\n")
             
             for results in results_lists:
-                if results:  # 檢查列表是否有資料
+                if results: 
                     for result in results:
                         file.write(result + "\n")
         
@@ -707,5 +739,5 @@ class ComparisonPage_2(ctk.CTkFrame):
         exl_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.xlsx")
 
         results, matches = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
-        self.print_fixedtag_file(file_path, exclude_tags, results, matches)
+        # self.print_fixedtag_file(file_path, exclude_tags, results, matches)
         self.export_to_excel(results, exl_path)
