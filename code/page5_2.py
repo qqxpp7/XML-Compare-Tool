@@ -566,7 +566,7 @@ class ComparisonPage_2(ctk.CTkFrame):
         if element1.tag != element2.tag:
             changes.append((path, "Tag changed", f'from <{element1.tag}> to <{element2.tag}>'))
         if element1.text != element2.text:
-            changes.append((path, "Text changed", f'{element1.text} -> {element2.text}'))
+            changes.append((path, "Text changed", f'{element1.text} != {element2.text}'))
         
         children1 = list(element1)
         children2 = list(element2)
@@ -578,9 +578,9 @@ class ComparisonPage_2(ctk.CTkFrame):
         removed_tags = tags1 - tags2
         
         for tag in added_tags:
-            changes.append((f'{path}/{element1.tag}', "Tag added", f'<{tag}>'))
+            changes.append((f'{path}/{element1.tag}/<{tag}>', "Tag added", element2.find(tag).text or ''))
         for tag in removed_tags:
-            changes.append((f'{path}/{element1.tag}', "Tag deleted", f'<{tag}>'))
+            changes.append((f'{path}/{element1.tag}/<{tag}>', "Tag deleted", element1.find(tag).text or ''))
         
         common_tags = tags1 & tags2
         for tag in common_tags:
@@ -663,7 +663,7 @@ class ComparisonPage_2(ctk.CTkFrame):
                 rows.append([serial_number, file_name, path, change_type, detail])
                 serial_number += 1
         
-        df = pd.DataFrame(rows, columns=['流水號', '檔案名稱', 'Path', 'Type', '差異的Text'])
+        df = pd.DataFrame(rows, columns=['', 'Key', 'Path', 'Type', 'Value'])
         df.to_excel(excel_file_path, index=False)
         print(f'Excel report generated at: {excel_file_path}')
         
