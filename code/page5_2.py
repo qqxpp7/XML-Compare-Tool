@@ -7,11 +7,11 @@ Created on Sun Jul 28 15:15:11 2024
 import os
 import time
 import random
-import difflib #相同element
+import difflib #變色
 import pandas as pd
 import tkinter as tk
 import shared_data as sd
-from pathlib import Path #變色
+from pathlib import Path #抓取在資料夾下的所有xml檔案
 import customtkinter as ctk
 from datetime import datetime
 import xml.etree.ElementTree as ET
@@ -578,13 +578,16 @@ class ComparisonPage_2(ctk.CTkFrame):
         需要去讀取它每個tag及text
         """
         
-        def recurse(elem):
-           desc = elem.tag
-           if len(elem):
-               desc += '/' + '/'.join(recurse(child) for child in elem)
-           return desc
-       
-        return recurse(element)
+        descriptions = []
+
+        def recurse(elem, prefix=''):
+            current_path = f"{prefix}/{elem.tag}".strip('/')
+            descriptions.append((current_path, elem.text.strip() if elem.text else ''))
+            for child in elem:
+                recurse(child, current_path)
+
+        recurse(element)
+        return descriptions
     
     def compare_elements(self, element1, element2, parent_path='', index=0):
         changes = []
@@ -608,12 +611,14 @@ class ComparisonPage_2(ctk.CTkFrame):
                 changes.extend(sub_changes)
             elif i < len(children1):
                 sub_path = self.convert_path_format(children1[i], i, current_path)
-                description = self.get_tag_description(children1[i])
-                changes.append((sub_path, "Tag deleted", description, '', children1[i].text or ''))
+                descriptions_and_values = self.get_tag_description(children1[i])
+                for description, value in descriptions_and_values:
+                    changes.append((sub_path, "Tag deleted", description, '', value))
             elif i < len(children2):
                 sub_path = self.convert_path_format(children2[i], i, current_path)
-                description = self.get_tag_description(children2[i])
-                changes.append((sub_path, "Tag added", description, '', children2[i].text or ''))
+                descriptions_and_values = self.get_tag_description(children2[i])
+                for description, value in descriptions_and_values:
+                    changes.append((sub_path, "Tag added", description, '', value))
 
         return changes
     

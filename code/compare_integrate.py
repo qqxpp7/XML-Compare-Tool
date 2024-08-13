@@ -174,7 +174,6 @@ def compare_elements_count(before_count, after_count, before_values, after_value
     return differences, moved_elements
 
 
-
 def analyze_deepdiff(before_file, after_file):
     '''
     使用DeepDiff來比較兩個XML字典
@@ -217,9 +216,6 @@ def compare_elements_structure(element1, element2, path=""):
 
     children1 = list(element1)
     children2 = list(element2)
-
-    if len(children1) != len(children2):
-        return differences
 
     tag_positions1 = [child.tag for child in children1]
     tag_positions2 = [child.tag for child in children2]
