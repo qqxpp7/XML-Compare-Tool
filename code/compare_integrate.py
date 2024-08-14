@@ -203,9 +203,9 @@ def compare_elements_structure(element1, element2, path=""):
     '''
     不同名稱Element交換位置
     比較結構和標籤順序
-    數量有差異不理會->屬於刪除、新增的部分
     數量一樣->刪除A，新增B，並且有交換位置也會列出
-    數量有差異又交換->
+    數量有差異又交換->有刪除或新增，會忽視刪除新增的順序
+    只比較兩邊名稱相符的子元素的順序
     '''
     differences = []
 
@@ -214,19 +214,24 @@ def compare_elements_structure(element1, element2, path=""):
 
     path += "/" + element1.tag
 
-    children1 = list(element1)
-    children2 = list(element2)
+    children1 = {child.tag: child for child in element1}
+    children2 = {child.tag: child for child in element2}
 
-    tag_positions1 = [child.tag for child in children1]
-    tag_positions2 = [child.tag for child in children2]
+    common_tags = set(children1.keys()) & set(children2.keys())
+
+    for tag in common_tags:
+        child1 = children1[tag]
+        child2 = children2[tag]
+
+        differences.extend(compare_elements_structure(child1, child2, path))
+
+    tag_positions1 = [child.tag for child in element1 if child.tag in common_tags]
+    tag_positions2 = [child.tag for child in element2 if child.tag in common_tags]
 
     if tag_positions1 != tag_positions2:
         for i, (tag1, tag2) in enumerate(zip(tag_positions1, tag_positions2)):
             if tag1 != tag2:
                 differences.append(f"Tag在{path}交換順序: {tag1} 跟 {tag2}交換")
-
-    for child1, child2 in zip(children1, children2):
-        differences.extend(compare_elements_structure(child1, child2, path))
 
     return differences
 
