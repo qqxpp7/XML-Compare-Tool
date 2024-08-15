@@ -553,9 +553,9 @@ class ComparisonPage_2(ctk.CTkFrame):
         tree = ET.parse(xml_path)
         root = tree.getroot()
         root = self.remove_excluded_tags(root, exclude_tags)
-        return ET.tostring(root, encoding='unicode')
+        return root
     
-    def convert_path_format(self, element, index, parent_path=''):
+    def convert_path_format(self, element, index,  path=''):
         '''
         將excel內的path欄位更改成
         {attribute}parent[index]/child[index]
@@ -568,59 +568,42 @@ class ComparisonPage_2(ctk.CTkFrame):
             attributes = ', '.join(f'{k}="{v}"' for k, v in element.attrib.items())
             attribute_string = f'{{attribute: {attributes}}}'
 
-        full_path = f'{parent_path}/{tag_name}[{index}]'.strip('/')
-
-        return f'{attribute_string}/{full_path}'
+        return f'{attribute_string}/{path}{tag_name}[{index}]'
     
-    def get_tag_description(self, element):
-        """
-        當新增或刪除一個包含多個element的母element時
-        需要去讀取它每個tag及text
-        """
-        
-        descriptions = []
-
-        def recurse(elem, prefix=''):
-            current_path = f"{prefix}/{elem.tag}".strip('/')
-            descriptions.append((current_path, elem.text.strip() if elem.text else ''))
-            for child in elem:
-                recurse(child, current_path)
-
-        recurse(element)
-        return descriptions
     
-    def compare_elements(self, element1, element2, parent_path='', index=0):
+    def compare_elements(self, element1, element2, path=''):
         changes = []
-        current_path = self.convert_path_format(element1, index, parent_path)
-        
-        if element1.tag != element2.tag:
-            changes.append((current_path, "Tag changed", f'from <{element1.tag}> to <{element2.tag}>', '', ''))
-        if element1.text != element2.text:
-            changes.append((current_path, "Text changed", '', '', f'{element1.text} -> {element2.text}'))
-        if element1.attrib != element2.attrib:
-            changes.append((current_path, "Attribute changed", '', '', f'{element1.attrib} -> {element2.attrib}'))
-        
+        after_path = path if element2 is not None else "空"
+
+        if element1.tag != (element2.tag if element2 is not None else "空"):
+            changes.append((path, after_path, f'{element1.tag} != {element2.tag if element2 is not None else "空"}', '', ''))
+        if element1.attrib != (element2.attrib if element2 is not None else {}):
+            changes.append((path, after_path, '', f'{element1.attrib} != {element2.attrib if element2 is not None else {}}', ''))
+        if element1.text.strip() != (element2.text.strip() if element2 is not None and element2.text is not None else ''):
+            changes.append((path, after_path, '', '', f'{element1.text.strip()} != {element2.text.strip() if element2 is not None and element2.text is not None else ""}'))
+
         children1 = list(element1)
-        children2 = list(element2)
-        
+        children2 = list(element2) if element2 is not None else []
+
         max_len = max(len(children1), len(children2))
-        
         for i in range(max_len):
             if i < len(children1) and i < len(children2):
-                sub_changes = self.compare_elements(children1[i], children2[i], current_path, i)
+                child1 = children1[i]
+                child2 = children2[i]
+                sub_path = self.convert_path_format(child1, i, f'{path}{element1.tag}/')
+                sub_changes = self.compare_elements(child1, child2, path=sub_path)
                 changes.extend(sub_changes)
             elif i < len(children1):
-                sub_path = self.convert_path_format(children1[i], i, current_path)
-                descriptions_and_values = self.get_tag_description(children1[i])
-                for description, value in descriptions_and_values:
-                    changes.append((sub_path, "Tag deleted", description, '', value))
+                child1 = children1[i]
+                sub_path = self.convert_path_format(child1, i, f'{path}{element1.tag}/')
+                changes.append((sub_path, '空', child1.tag, '', child1.text.strip() if child1.text else ''))
             elif i < len(children2):
-                sub_path = self.convert_path_format(children2[i], i, current_path)
-                descriptions_and_values = self.get_tag_description(children2[i])
-                for description, value in descriptions_and_values:
-                    changes.append((sub_path, "Tag added", description, '', value))
+                child2 = children2[i]
+                sub_path = self.convert_path_format(child2, i, f'{path}{element2.tag}/')
+                changes.append(('空', sub_path, child2.tag, '', child2.text.strip() if child2.text else ''))
 
         return changes
+
     
     
     def compare_xml_files(self, folder1, folder2, exclude_tags):
@@ -629,20 +612,17 @@ class ComparisonPage_2(ctk.CTkFrame):
         '''
         folder1 = Path(folder1)
         folder2 = Path(folder2)
-        
+       
         results = []
         matches = []
-        
+       
         for file1 in folder1.glob('*.xml'):
             file2 = folder2 / file1.name
             if file2.exists():
-                content1 = self.get_filtered_xml_content(file1, exclude_tags)
-                content2 = self.get_filtered_xml_content(file2, exclude_tags)
+                root1 = self.get_filtered_xml_content(file1, exclude_tags)
+                root2 = self.get_filtered_xml_content(file2, exclude_tags)
                 
-                root1 = ET.fromstring(content1)
-                root2 = ET.fromstring(content2)
-                
-                if content1 == content2:
+                if ET.tostring(root1, encoding='unicode') == ET.tostring(root2, encoding='unicode'):
                     matches.append(file1.name)
                 else:
                     changes = self.compare_elements(root1, root2)
@@ -693,14 +673,14 @@ class ComparisonPage_2(ctk.CTkFrame):
         serial_number = 1
        
         for res in results:
-           file_name = res[0]
-           changes = res[1]
-           for change in changes:
-                path, change_type, description, _, value = change
-                rows.append([serial_number, file_name, path, change_type, description, value])
+            file_name = res[0]
+            changes = res[1]
+            for change in changes:
+                key, after_path, tag, attribute, text = change
+                rows.append([serial_number, key, after_path, tag, attribute, text])
                 serial_number += 1
         
-        df = pd.DataFrame(rows, columns=['', 'Key', 'Path', 'Type', 'Description', 'Value'])
+        df = pd.DataFrame(rows, columns=['流水號', 'Key', 'After path', 'Tag', 'Attribute', 'Text'])
         df.to_excel(excel_file_path, index=False)
         print(f'Excel report generated at: {excel_file_path}')
         
