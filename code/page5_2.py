@@ -601,11 +601,11 @@ class ComparisonPage_2(ctk.CTkFrame):
             elif i < len(children1):
                 child1 = children1[i]
                 child_path = self.convert_path_format(child1, current_path, i)
-                changes.append((child_path, '空', child1.tag, '', child1.text.strip() if child1.text else ''))
+                changes.append((child_path, '空', child1.tag + " != ", '', child1.text.strip() + " != " if child1.text else ''))
             elif i < len(children2):
                 child2 = children2[i]
                 child_path = self.convert_path_format(child2, after_path, i)
-                changes.append(('空', child_path, child2.tag, '', child2.text.strip() if child2.text else ''))
+                changes.append(('空', child_path, " != " + child2.tag, '', " != " + child2.text.strip() if child2.text else ''))
 
         return changes
     
