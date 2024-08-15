@@ -555,7 +555,7 @@ class ComparisonPage_2(ctk.CTkFrame):
         root = self.remove_excluded_tags(root, exclude_tags)
         return root
     
-    def convert_path_format(self, element, index,  path=''):
+    def convert_path_format(self, element, index, parent_path=''):
         '''
         將excel內的path欄位更改成
         {attribute}parent[index]/child[index]
@@ -568,7 +568,8 @@ class ComparisonPage_2(ctk.CTkFrame):
             attributes = ', '.join(f'{k}="{v}"' for k, v in element.attrib.items())
             attribute_string = f'{{attribute: {attributes}}}'
 
-        return f'{attribute_string}/{path}{tag_name}[{index}]'
+        return f'{attribute_string}{parent_path}{tag_name}[{index}]'
+
     
     
     def compare_elements(self, element1, element2, path='', after_base_path=''):
@@ -604,8 +605,6 @@ class ComparisonPage_2(ctk.CTkFrame):
                 changes.append(('空', sub_after_path, child2.tag, '', child2.text.strip() if child2.text else ''))
 
         return changes
-
-    
     
     def compare_xml_files(self, folder1, folder2, exclude_tags):
         '''
@@ -632,6 +631,30 @@ class ComparisonPage_2(ctk.CTkFrame):
         
         return results
     
+    def export_to_excel(self, results, excel_file_path):
+        '''
+        印出excel檔案
+        分別有流水號、檔名(key)、xmlpath、差異類型(type)
+        '''
+        rows = []
+        serial_number = 1
+       
+        for res in results:
+           file_name = res[0]
+           changes = res[1]
+           for change in changes:
+               
+               key, after_path, tag, attribute, text = change
+               rows.append([serial_number, file_name, after_path, tag, attribute, text])
+               serial_number += 1
+        
+        df = pd.DataFrame(rows, columns=['', 'Key', 'After path', 'Tag', 'Attribute', 'Text'])
+        df.to_excel(excel_file_path, index=False)
+        print(f'Excel report generated at: {excel_file_path}')
+        
+        if os.name == 'nt':
+            os.startfile(excel_file_path)
+            
     def print_fixedtag_file(self, file_path, exclude_tags, results, matches):
         '''
         印固定element的詳細txt檔案
@@ -664,28 +687,7 @@ class ComparisonPage_2(ctk.CTkFrame):
             os.startfile(file_path)
     
     
-    def export_to_excel(self, results, excel_file_path):
-        '''
-        印出excel檔案
-        分別有流水號、檔名(key)、xmlpath、差異類型(type)
-        '''
-        rows = []
-        serial_number = 1
-       
-        for res in results:
-            file_name = res[0]
-            changes = res[1]
-            for change in changes:
-                key, after_path, tag, attribute, text = change
-                rows.append([serial_number, key, after_path, tag, attribute, text])
-                serial_number += 1
-        
-        df = pd.DataFrame(rows, columns=['流水號', 'Key', 'After path', 'Tag', 'Attribute', 'Text'])
-        df.to_excel(excel_file_path, index=False)
-        print(f'Excel report generated at: {excel_file_path}')
-        
-        if os.name == 'nt':
-            os.startfile(excel_file_path)
+    
         
     def print_changedtag_file(self, file_path, changed_tags, *results_lists):
         '''
