@@ -571,9 +571,9 @@ class ComparisonPage_2(ctk.CTkFrame):
         return f'{attribute_string}/{path}{tag_name}[{index}]'
     
     
-    def compare_elements(self, element1, element2, path=''):
+    def compare_elements(self, element1, element2, path='', after_base_path=''):
         changes = []
-        after_path = path if element2 is not None else "空"
+        after_path = after_base_path if element2 is not None else "空"
 
         if element1.tag != (element2.tag if element2 is not None else "空"):
             changes.append((path, after_path, f'{element1.tag} != {element2.tag if element2 is not None else "空"}', '', ''))
@@ -591,7 +591,8 @@ class ComparisonPage_2(ctk.CTkFrame):
                 child1 = children1[i]
                 child2 = children2[i]
                 sub_path = self.convert_path_format(child1, i, f'{path}{element1.tag}/')
-                sub_changes = self.compare_elements(child1, child2, path=sub_path)
+                sub_after_path = self.convert_path_format(child2, i, f'{after_base_path}{element2.tag}/')
+                sub_changes = self.compare_elements(child1, child2, path=sub_path, after_base_path=sub_after_path)
                 changes.extend(sub_changes)
             elif i < len(children1):
                 child1 = children1[i]
@@ -599,8 +600,8 @@ class ComparisonPage_2(ctk.CTkFrame):
                 changes.append((sub_path, '空', child1.tag, '', child1.text.strip() if child1.text else ''))
             elif i < len(children2):
                 child2 = children2[i]
-                sub_path = self.convert_path_format(child2, i, f'{path}{element2.tag}/')
-                changes.append(('空', sub_path, child2.tag, '', child2.text.strip() if child2.text else ''))
+                sub_after_path = self.convert_path_format(child2, i, f'{after_base_path}{element2.tag}/')
+                changes.append(('空', sub_after_path, child2.tag, '', child2.text.strip() if child2.text else ''))
 
         return changes
 
@@ -614,8 +615,7 @@ class ComparisonPage_2(ctk.CTkFrame):
         folder2 = Path(folder2)
        
         results = []
-        matches = []
-       
+        
         for file1 in folder1.glob('*.xml'):
             file2 = folder2 / file1.name
             if file2.exists():
@@ -623,14 +623,14 @@ class ComparisonPage_2(ctk.CTkFrame):
                 root2 = self.get_filtered_xml_content(file2, exclude_tags)
                 
                 if ET.tostring(root1, encoding='unicode') == ET.tostring(root2, encoding='unicode'):
-                    matches.append(file1.name)
+                    continue  # Files are identical, no need to add to results
                 else:
-                    changes = self.compare_elements(root1, root2)
+                    changes = self.compare_elements(root1, root2, path=file1.name, after_base_path=file2.name)
                     results.append((file1.name, changes))
             else:
                 results.append((file1.name, 'Missing in folder2'))
         
-        return results, matches
+        return results
     
     def print_fixedtag_file(self, file_path, exclude_tags, results, matches):
         '''
@@ -713,7 +713,6 @@ class ComparisonPage_2(ctk.CTkFrame):
             
     def execute(self):
         exclude_tags = self.read_exclude_tags()
-        print(exclude_tags)
         self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
         self.after_file_directory = self.find_folders_with_split(sd.after_path.get())
         
@@ -723,6 +722,6 @@ class ComparisonPage_2(ctk.CTkFrame):
         file_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.txt")
         exl_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.xlsx")
 
-        results, matches = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
+        results = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
         # self.print_fixedtag_file(file_path, exclude_tags, results, matches)
         self.export_to_excel(results, exl_path)
