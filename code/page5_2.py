@@ -555,7 +555,7 @@ class ComparisonPage_2(ctk.CTkFrame):
         root = self.remove_excluded_tags(root, exclude_tags)
         return root
     
-    def convert_path_format(self, element, index, parent_path=''):
+    def convert_path_format(self, element, parent_path='', index=0):
         '''
         將excel內的path欄位更改成
         {attribute}parent[index]/child[index]
@@ -568,20 +568,25 @@ class ComparisonPage_2(ctk.CTkFrame):
             attributes = ', '.join(f'{k}="{v}"' for k, v in element.attrib.items())
             attribute_string = f'{{attribute: {attributes}}}'
 
-        return f'{attribute_string}{parent_path}{tag_name}[{index}]'
+        full_path = f'{parent_path}{tag_name}[{index}]'
+        if attribute_string:
+            full_path = f'{attribute_string}/{full_path}'
+
+        return full_path
 
     
     
-    def compare_elements(self, element1, element2, path='', after_base_path=''):
+    def compare_elements(self, element1, element2, path='', after_base_path='', parent_path='', index=0):
         changes = []
-        after_path = after_base_path if element2 is not None else "空"
+        current_path = self.convert_path_format(element1, parent_path, index)
+        after_path = self.convert_path_format(element2, after_base_path, index) if element2 is not None else "空"
 
         if element1.tag != (element2.tag if element2 is not None else "空"):
-            changes.append((path, after_path, f'{element1.tag} != {element2.tag if element2 is not None else "空"}', '', ''))
+            changes.append((current_path, after_path, f'{element1.tag} != {element2.tag if element2 is not None else "空"}', '', ''))
         if element1.attrib != (element2.attrib if element2 is not None else {}):
-            changes.append((path, after_path, '', f'{element1.attrib} != {element2.attrib if element2 is not None else {}}', ''))
+            changes.append((current_path, after_path, '', f'{element1.attrib} != {element2.attrib if element2 is not None else {}}', ''))
         if element1.text.strip() != (element2.text.strip() if element2 is not None and element2.text is not None else ''):
-            changes.append((path, after_path, '', '', f'{element1.text.strip()} != {element2.text.strip() if element2 is not None and element2.text is not None else ""}'))
+            changes.append((current_path, after_path, '', '', f'{element1.text.strip()} != {element2.text.strip() if element2 is not None and element2.text is not None else ""}'))
 
         children1 = list(element1)
         children2 = list(element2) if element2 is not None else []
@@ -591,18 +596,16 @@ class ComparisonPage_2(ctk.CTkFrame):
             if i < len(children1) and i < len(children2):
                 child1 = children1[i]
                 child2 = children2[i]
-                sub_path = self.convert_path_format(child1, i, f'{path}{element1.tag}/')
-                sub_after_path = self.convert_path_format(child2, i, f'{after_base_path}{element2.tag}/')
-                sub_changes = self.compare_elements(child1, child2, path=sub_path, after_base_path=sub_after_path)
+                sub_changes = self.compare_elements(child1, child2, path=current_path, after_base_path=after_path, parent_path=current_path, index=i)
                 changes.extend(sub_changes)
             elif i < len(children1):
                 child1 = children1[i]
-                sub_path = self.convert_path_format(child1, i, f'{path}{element1.tag}/')
-                changes.append((sub_path, '空', child1.tag, '', child1.text.strip() if child1.text else ''))
+                child_path = self.convert_path_format(child1, current_path, i)
+                changes.append((child_path, '空', child1.tag, '', child1.text.strip() if child1.text else ''))
             elif i < len(children2):
                 child2 = children2[i]
-                sub_after_path = self.convert_path_format(child2, i, f'{after_base_path}{element2.tag}/')
-                changes.append(('空', sub_after_path, child2.tag, '', child2.text.strip() if child2.text else ''))
+                child_path = self.convert_path_format(child2, after_path, i)
+                changes.append(('空', child_path, child2.tag, '', child2.text.strip() if child2.text else ''))
 
         return changes
     
@@ -612,7 +615,7 @@ class ComparisonPage_2(ctk.CTkFrame):
         '''
         folder1 = Path(folder1)
         folder2 = Path(folder2)
-       
+        
         results = []
         
         for file1 in folder1.glob('*.xml'):
@@ -624,7 +627,7 @@ class ComparisonPage_2(ctk.CTkFrame):
                 if ET.tostring(root1, encoding='unicode') == ET.tostring(root2, encoding='unicode'):
                     continue  # Files are identical, no need to add to results
                 else:
-                    changes = self.compare_elements(root1, root2, path=file1.name, after_base_path=file2.name)
+                    changes = self.compare_elements(root1, root2)
                     results.append((file1.name, changes))
             else:
                 results.append((file1.name, 'Missing in folder2'))
