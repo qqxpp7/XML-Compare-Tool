@@ -609,6 +609,39 @@ class ComparisonPage_2(ctk.CTkFrame):
 
         return changes
     
+    
+    def merge_changes(self, changes):
+        merged_changes = []
+        path_map = {}
+    
+        for change in changes:
+            key, after_path, tag, attribute, text = change
+    
+            if after_path == "空":
+                # 如果路径是空，不进行合并，单独保存
+                merged_changes.append(change)
+                continue
+    
+            if after_path not in path_map:
+                path_map[after_path] = [key, '', '', '']
+                merged_changes.append((key, after_path, '', '', ''))
+    
+            idx = next(i for i, v in enumerate(merged_changes) if v[1] == after_path)
+    
+            if tag:
+                path_map[after_path][1] += f'{tag}, ' if path_map[after_path][1] else tag
+            if attribute:
+                path_map[after_path][2] += f'{attribute}, ' if path_map[after_path][2] else attribute
+            if text:
+                path_map[after_path][3] += f'{text}, ' if path_map[after_path][3] else text
+    
+            merged_changes[idx] = (
+                key, after_path, path_map[after_path][1].rstrip(', '), path_map[after_path][2].rstrip(', '), path_map[after_path][3].rstrip(', ')
+            )
+    
+        return merged_changes
+
+
     def compare_xml_files(self, folder1, folder2, exclude_tags):
         '''
         比較刪除變動element的樹
@@ -628,7 +661,8 @@ class ComparisonPage_2(ctk.CTkFrame):
                     continue  # Files are identical, no need to add to results
                 else:
                     changes = self.compare_elements(root1, root2)
-                    results.append((file1.name, changes))
+                    merged_changes = self.merge_changes(changes)
+                    results.append((file1.name, merged_changes))
             else:
                 results.append((file1.name, 'Missing in folder2'))
         
