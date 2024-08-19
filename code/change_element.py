@@ -20,7 +20,6 @@ def run(before_file, after_file, tag_file):
         for line in f:
             find_a_tag(before_root, after_root, line)
             
-        
 def find_a_tag(before_root, after_root, tag):
     tag_path = ".//" + tag.strip("<>").replace(">/<", "/")
     tag_path = tag_path.replace(before_root.tag, "")   
@@ -33,13 +32,32 @@ def find_a_tag(before_root, after_root, tag):
             name = element.tag
             attributes = element.attrib
             text = element.text.strip() if element.text else ''
+            
+            
+            def build_paths(element, current_path):
+                paths = []
+                if element.tag == name:
+                    paths.append(current_path)
+                for index, child in enumerate(element):
+                    child_path = f"{current_path}/{child.tag}[{index}]"
+                    paths.extend(build_paths(child, child_path))
+                return paths
+            
+            initial_path = f"{root.tag}"
+            paths = build_paths(root, initial_path)
+            
             tag_info_list.append({
                 'name': name,
                 'attributes': attributes,
-                'text': text
+                'text': text,
+                'path': paths
             })
         return tag_info_list
-   
+    
+
+    # 从根元素开始构建路径
+    
+    
     print(tag, tag_path)
     before_tag_info = get_tag_info(before_root, tag_path)
     after_tag_info = get_tag_info(after_root, tag_path)
