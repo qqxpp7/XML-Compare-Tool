@@ -568,7 +568,7 @@ class ComparisonPage_2(ctk.CTkFrame):
             attributes = ', '.join(f'{k}="{v}"' for k, v in element.attrib.items())
             attribute_string = f'{{attribute: {attributes}}}'
 
-        full_path = f'{parent_path}{tag_name}[{index}]'
+        full_path = f'{parent_path}/{tag_name}[{index}]'
         if attribute_string:
             full_path = f'{attribute_string}/{full_path}'
 
