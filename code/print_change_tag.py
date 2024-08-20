@@ -33,24 +33,50 @@ def main(before_file, after_file, tag_file):
             else:
                 b_plural_tag = find_same_tag_method(before_root, tag_path1, tag_path2)
                 a_plural_tag = find_same_tag_method(after_root, tag_path1, tag_path2)
-                
-                print(b_plural_tag, a_plural_tag)
-                list1_values = [item[1] for item in b_plural_tag]
-                list2_values = [item[1] for item in a_plural_tag]
-                
+
                 # 找出 list1 中不存在於 list2 中的項目
                 not_in_after = []
-                for item in b_plural_tag:
-                    if item[1] not in list2_values:
-                        not_in_after.append(item)
+                for b in b_plural_tag:
+                    for a in a_plural_tag:
+                        if b[1] == a[1]: #key相等，對比剩下的，如果brfore沒有視為插入      
+                            differences = compare_same_key_child(b[2], a[2])
+                            for diff in differences:
+                                print(f"Line {diff[0]}:")
+                                print(f"Tag 1: {diff[1].text}")
+                                print(f"Tag 2: {diff[2].text}")
+                                print("")
+
+                        else:
+                            not_in_after.append(b[:2])
                 
                 # 找出 list2 中不存在於 list1 中的項目
                 not_in_before = []
-                for item in a_plural_tag:
-                    if item[1] not in list1_values:
-                        not_in_before.append(item)
+                for a in a_plural_tag:
+                    for b in b_plural_tag:
+                        if a[1] != b[1]:
+                            not_in_before.append(a[:2])              
+                    
                 print(f"before有after沒：{not_in_after}")
                 print(f"before沒after有：{not_in_before}")
+
+def compare_same_key_child(before_tag, after_tag):
+    '''
+    確定行數較多的tag，以便逐行比較
+    將差異存在differences
+    '''
+    max_lines = max(len(before_tag), len(after_tag))
+
+    differences = []
+
+    for i in range(max_lines):
+        line1 = before_tag[i] if i < len(before_tag) else ""
+        line2 = after_tag[i] if i < len(after_tag) else ""
+        
+        if line1.text != line2.text :
+            differences.append((i+1, line1, line2))
+            print('->', line1, line2)
+
+    return differences
                 
 def count_a_tag_method(node, find_parent_tag, find_child_tag, parent_tag=None):
     count = 0
@@ -91,27 +117,32 @@ def find_same_tag_method(node, find_parent_tag, find_child_tag):
     if node.tag == find_parent_tag:
         for child_tag in node.findall(find_child_tag):
             if len(child_tag) > 0:
-                
                 values = [child.text for child in list(child_tag)[:5]]
-                joined_values = '_'.join(values)
-                values_list.append([index, joined_values])
-                index += 1
+                joined_values = '_'.join(values) 
+                     
             else:
-                return
+                attrs = '_'.join(f"{k}_{v}" for k, v in child_tag.attrib.items())
+                text_value = child_tag.text if child_tag.text is not None else ""
                 
+                joined_values = f"{attrs}_{text_value}"  
+            
+            values_list.append([index, joined_values, child_tag]) 
+            index += 1
     else:        
         for parent_tag in node.findall('.//' + find_parent_tag):
             for child_tag in parent_tag.findall(find_child_tag):
                 if len(child_tag) > 0:
                     values = [child.text for child in list(child_tag)[:5]]
-                    joined_values = '_'.join(values)
-                    values_list.append([index, joined_values])
-                    index += 1    
+                    joined_values = '_'.join(values)       
+                    
                 else:
-                    return    
+                    attrs = '_'.join(f"{k}_{v}" for k, v in child_tag.attrib.items())
+                    text_value = child_tag.text if child_tag.text is not None else ""
+                    joined_values = f"{attrs}_{text_value}"
+                    
+                values_list.append([index, joined_values, child_tag]) 
+                index += 1  
     return values_list
-
-
 
 def compare(before_tag, after_tag, tag_name):
     '''
