@@ -31,8 +31,26 @@ def main(before_file, after_file, tag_file):
                 a_return = find_a_tag_method(after_root, tag_path1, tag_path2, '')
                 compare(b_return, a_return, tag_path2)
             else:
-                find_same_tag_method(before_root, tag_path1, tag_path2)
+                b_plural_tag = find_same_tag_method(before_root, tag_path1, tag_path2)
+                a_plural_tag = find_same_tag_method(after_root, tag_path1, tag_path2)
                 
+                print(b_plural_tag, a_plural_tag)
+                list1_values = [item[1] for item in b_plural_tag]
+                list2_values = [item[1] for item in a_plural_tag]
+                
+                # 找出 list1 中不存在於 list2 中的項目
+                not_in_list2 = []
+                for item in b_plural_tag:
+                    if item[1] not in list2_values:
+                        not_in_list2.append(item)
+                
+                # 找出 list2 中不存在於 list1 中的項目
+                not_in_list1 = []
+                for item in a_plural_tag:
+                    if item[1] not in list1_values:
+                        not_in_list1.append(item)
+                print(f"before有after沒：{not_in_list2}")
+                print(f"before沒after有：{not_in_list1}")
                 
 def count_a_tag_method(node, find_parent_tag, find_child_tag, parent_tag=None):
     count = 0
@@ -63,16 +81,35 @@ def find_a_tag_method(node, find_parent_tag, find_child_tag, current_path, index
 def find_same_tag_method(node, find_parent_tag, find_child_tag):
     """
     find a tag at least 2 times
+    判斷find_parent_tag是不是根元素
+    檢查find_child_tag是否有子元素
+    再去抓取前5個子元素的text
+    沒有子元素比對attribute及text
     """
+    index = 0
+    values_list = []
     if node.tag == find_parent_tag:
         for child_tag in node.findall(find_child_tag):
-            values = [child.text for child in list(child_tag)[:3]]
-            print(f'Book ID {child_tag.get("id")}:', values)   
+            if len(child_tag) > 0:
+                
+                values = [child.text for child in list(child_tag)[:5]]
+                joined_values = '_'.join(values)
+                values_list.append([index, joined_values])
+                index += 1
+            else:
+                return
+                
     else:        
-        for parent_tag in node.findall('.//find_parent_tag'):
+        for parent_tag in node.findall('.//' + find_parent_tag):
             for child_tag in parent_tag.findall(find_child_tag):
-                values = [child.text for child in list(child_tag)[:3]]
-                print(f'Book ID {child_tag.get("id")}:', values)
+                if len(child_tag) > 0:
+                    values = [child.text for child in list(child_tag)[:5]]
+                    joined_values = '_'.join(values)
+                    values_list.append([index, joined_values])
+                    index += 1    
+                else:
+                    return    
+    return values_list
 
 
 
