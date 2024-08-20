@@ -39,18 +39,18 @@ def main(before_file, after_file, tag_file):
                 list2_values = [item[1] for item in a_plural_tag]
                 
                 # 找出 list1 中不存在於 list2 中的項目
-                not_in_list2 = []
+                not_in_after = []
                 for item in b_plural_tag:
                     if item[1] not in list2_values:
-                        not_in_list2.append(item)
+                        not_in_after.append(item)
                 
                 # 找出 list2 中不存在於 list1 中的項目
-                not_in_list1 = []
+                not_in_before = []
                 for item in a_plural_tag:
                     if item[1] not in list1_values:
-                        not_in_list1.append(item)
-                print(f"before有after沒：{not_in_list2}")
-                print(f"before沒after有：{not_in_list1}")
+                        not_in_before.append(item)
+                print(f"before有after沒：{not_in_after}")
+                print(f"before沒after有：{not_in_before}")
                 
 def count_a_tag_method(node, find_parent_tag, find_child_tag, parent_tag=None):
     count = 0
