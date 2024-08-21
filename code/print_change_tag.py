@@ -31,19 +31,22 @@ def main(before_file, after_file, tag_file):
                 a_return = find_a_tag_method(after_root, tag_path1, tag_path2, '')
                 compare(b_return, a_return, tag_path2)
             else:
-                b_plural_tag = find_same_tag_method(before_root, tag_path1, tag_path2)
-                a_plural_tag = find_same_tag_method(after_root, tag_path1, tag_path2)
-
-                # 找出 list1 中不存在於 list2 中的項目
+                b_plural_tag = find_same_tag_method(before_root, tag_path1, tag_path2, '')
+                a_plural_tag = find_same_tag_method(after_root, tag_path1, tag_path2, '')
+                
+                #[0]是index，[1]是key，[2]是element，[3]是路徑
+                # 找出 list1 中不存在於 list2 中的項目               
                 not_in_after = []
                 for b in b_plural_tag:
                     for a in a_plural_tag:
-                        if b[1] == a[1]: #key相等，對比剩下的，如果brfore沒有視為插入      
+                        if b[1] == a[1]: #key相等，對比底下所有的子element     
                             differences = compare_same_key_child(b[2], a[2])
                             for diff in differences:
                                 print(f"Line {diff[0]}:")
-                                print(f"Tag 1: {diff[1].text}")
-                                print(f"Tag 2: {diff[2].text}")
+                                print(f"Tag 1: {diff[1]} ")
+                                # print(f"before path: {b[3]} ")
+                                print(f"Tag 2: {diff[2]}")
+                                # print(f"after path: {a[3]}")
                                 print("")
 
                         else:
@@ -62,19 +65,40 @@ def main(before_file, after_file, tag_file):
 def compare_same_key_child(before_tag, after_tag):
     '''
     確定行數較多的tag，以便逐行比較
-    將差異存在differences
+    當行數有差異時，空的那邊為""
+    將element不相等的存在differences並回傳
     '''
-    max_lines = max(len(before_tag), len(after_tag))
-
     differences = []
 
-    for i in range(max_lines):
-        line1 = before_tag[i] if i < len(before_tag) else ""
-        line2 = after_tag[i] if i < len(after_tag) else ""
-        
-        if line1.text != line2.text :
-            differences.append((i+1, line1, line2))
-            print('->', line1, line2)
+    if len(before_tag) == len(after_tag): #相同element的子element數量一樣
+        for i in range(len(before_tag)):
+            if before_tag[i].tag != after_tag[i].tag :
+                print(f"tag不相等:{before_tag[i].tag} vs {after_tag[i].tag}")
+                differences.append((i+1, before_tag[i], after_tag[i]))
+                print('->', before_tag[i], after_tag[i])
+                
+            if before_tag[i].attrib != after_tag[i].attrib :
+                print(f"attribute不相等:{before_tag[i].attrib} vs {after_tag[i].attrib}")
+                differences.append((i+1, before_tag[i], after_tag[i]))
+                
+            if before_tag[i].text != after_tag[i].text :
+                print(f"text不相等:{before_tag[i].text} vs {after_tag[i].text}")
+                differences.append((i+1, before_tag[i], after_tag[i]))
+                
+    else:#相同element的子element數量不一樣！！   
+        min_lines = min(len(before_tag), len(after_tag))
+        for i in range(min_lines):
+            if not compare_same_key_child(before_tag[i], after_tag[i]):
+                continue
+            
+        if len(before_tag) > len(after_tag):
+            for i in range(min_lines, len(before_tag)):
+                print(f"刪除： {before_tag.tag}: {ET.tostring(before_tag[i], encoding='unicode').strip()}")
+                differences.append((i+1, before_tag[i], ""))
+        elif len(after_tag) > len(before_tag):
+            for i in range(min_lines, len(after_tag)):
+                print(f"新增: {after_tag.tag}: {ET.tostring(after_tag[i], encoding='unicode').strip()}")
+                differences.append((i+1, "", after_tag[i]))
 
     return differences
                 
@@ -103,8 +127,9 @@ def find_a_tag_method(node, find_parent_tag, find_child_tag, current_path, index
             return result
         
     return None
+        
 
-def find_same_tag_method(node, find_parent_tag, find_child_tag):
+def find_same_tag_method(node, find_parent_tag, find_child_tag, parent_path=""):
     """
     find a tag at least 2 times
     判斷find_parent_tag是不是根元素
@@ -114,6 +139,7 @@ def find_same_tag_method(node, find_parent_tag, find_child_tag):
     """
     index = 0
     values_list = []
+                
     if node.tag == find_parent_tag:
         for child_tag in node.findall(find_child_tag):
             if len(child_tag) > 0:
@@ -125,9 +151,11 @@ def find_same_tag_method(node, find_parent_tag, find_child_tag):
                 text_value = child_tag.text if child_tag.text is not None else ""
                 
                 joined_values = f"{attrs}_{text_value}"  
+                
             
             values_list.append([index, joined_values, child_tag]) 
             index += 1
+        
     else:        
         for parent_tag in node.findall('.//' + find_parent_tag):
             for child_tag in parent_tag.findall(find_child_tag):
@@ -142,6 +170,7 @@ def find_same_tag_method(node, find_parent_tag, find_child_tag):
                     
                 values_list.append([index, joined_values, child_tag]) 
                 index += 1  
+            
     return values_list
 
 def compare(before_tag, after_tag, tag_name):
