@@ -668,7 +668,14 @@ class ComparisonPage_2(ctk.CTkFrame):
         
         return results
     
-    def compare_tag_and_path(self, folder1, folder2, tags):
+    def load_tag_and_path(self, folder1, folder2, tags):
+        '''
+        讀取資料夾內的檔案，一個一個做比較
+        這邊會新增key(檔案名稱)
+        
+        self.alone_result會綜合所有檔案的單獨element錯誤訊息
+        self.plural_results會綜合所有檔案的複數element錯誤訊息
+        '''
         folder1 = Path(folder1)
         folder2 = Path(folder2)
         self.alone_result = []
@@ -677,66 +684,76 @@ class ComparisonPage_2(ctk.CTkFrame):
         for file1 in folder1.glob('*.xml'):
             file2 = folder2 / file1.name
             if file2.exists():
-
-                before_tree = ET.parse(file1)
-                before_root = before_tree.getroot()
                 
-                after_tree = ET.parse(file2)
-                after_root = after_tree.getroot()
+                alone_result, plural_results = self.compare_tag_and_path(file1, file2, tags)
+                #回傳獨自tag跟複數tag的差異，前面要再新增key(檔案名稱)
                 
-                for tag in tags:
-                    tag_path1, tag_path2 = tag.strip("<>\n").replace(">/<", "/").split('/')
-                    
-                    
-                    b_count = self.get_attribute(before_root, tag_path1, tag_path2)
-                    a_count = self.get_attribute(after_root, tag_path1, tag_path2)
-                    
-                    if max(len(b_count), len(a_count)) == 0:
-                        break
-                    elif max(len(b_count), len(a_count)) == 1:
-                        self.alone_result = self.compare_a_key(b_count[0], a_count[0], tag_path2) 
-                        print(self.alone_result)
-                    else:                
-                        #b_count,a_count --> [0]是index，[1]是key，[2]是element
-                        # 找出 list1 中不存在於 list2 中的項目       
-                        not_in_after = []
-                        for b in b_count:
-                            lv_flag = False
-                            for a in a_count:
-                                
-                                # if lv_flag: continue
-                                # print('->', b[5], '-->', a[5])
-                                if b[5] == a[5]: #key相等，對比底下所有的子element 
+                self.alone_result += [file1.name, alone_result]
+                self.plural_results += [file1.name, plural_results]
+                print(self.alone_result, self.plural_results)
+        return (self.alone_result, self.plural_results)     
+    
+    def compare_tag_and_path(self, file1, file2, tags):
+        '''
+        一個檔案的比較
+        比較兩個檔案的的變動element
+        b_count, a_count --> [i][0]是tag，[i][1]是attrbute，[i][2]是text，[i][3]是path，[i][4]是element
+        '''
+        before_tree = ET.parse(file1)
+        before_root = before_tree.getroot()
         
-                                    differences = self.compare_same_key_child(b[4], a[4])                            
-                                    for diff in differences:
-                                        print(f"Line {diff[0]}:")
-                                        print(f"before: {diff[1]} ")
-                                        print(f"after: {diff[2]}")
-                                        print("")
-                                    lv_flag = True  
-                                    break
+        after_tree = ET.parse(file2)
+        after_root = after_tree.getroot()
+        
+        differences = []
+        differences1 = []
+        for tag in tags:
+            tag_path1, tag_path2 = tag.strip("<>\n").replace(">/<", "/").split('/')
                                 
-                                
-                            if lv_flag == False:
-                                not_in_after.append([b[3], "delete", len(b[4])])
+            b_count = self.get_attribute(before_root, tag_path1, tag_path2)
+            a_count = self.get_attribute(after_root, tag_path1, tag_path2)
+            
+            if max(len(b_count), len(a_count)) == 0:
+                break
+            elif max(len(b_count), len(a_count)) == 1:
+                differences = self.compare_a_key(b_count[0], a_count[0], tag_path2) 
+            else:                
+                # 找出 list1 中不存在於 list2 中的項目       
+                not_in_after = []
+                for b in b_count:
+                    lv_flag = False
+                    for a in a_count:
                         
-                        # 找出 list2 中不存在於 list1 中的項目
-                        not_in_before = []
-                        for a in a_count:
-                            lv_flag_2 = False
-                            for b in b_count:
-                            
-                                if a[5] == b[5]:
-                                    lv_flag_2 = True
-                                    break
-                                                            
-                            if lv_flag_2 == False:    
-                                not_in_before.append([a[3],"insert", len(a[4])])              
-                            
-                        print(f"before有after沒有：{not_in_after}")
-                        print(f"before沒有after有：{not_in_before}")
+                        # if lv_flag: continue
+                        # print('->', b[5], '-->', a[5])
+                        if b[5] == a[5]: #key相等，對比底下所有的子element 
+
+                            differences1 = self.compare_same_key_child(b[4], a[4])                            
+                            for diff in differences1:
+                                print(diff)
+                            lv_flag = True  
+                            break
+                                                        
+                    if lv_flag == False:
+                        not_in_after.append([b[3], "delete", len(b[4])])
                 
+                # 找出 list2 中不存在於 list1 中的項目
+                not_in_before = []
+                for a in a_count:
+                    lv_flag_2 = False
+                    for b in b_count:
+                    
+                        if a[5] == b[5]:
+                            lv_flag_2 = True
+                            break
+                                                    
+                    if lv_flag_2 == False:    
+                        not_in_before.append([a[3],"insert", len(a[4])])              
+                    
+                print(f"before有after沒有：{not_in_after}")
+                print(f"before沒有after有：{not_in_before}")
+        return (differences, differences1)
+    
     def get_attribute(self, lv_root, lv_parent_tag, lv_tag):
         """
         lv_root: 根結點
@@ -753,7 +770,7 @@ class ComparisonPage_2(ctk.CTkFrame):
 
             # 檢查當前節點是否符合特定條件
             if node.tag == lv_tag  and parent_tag == lv_parent_tag:
-                values = [child.text for child in list(node)[:5]]
+                values = [child.text for child in list(node)[:2]]
                 joined_values = '_'.join(values) 
                 results.append([node.tag, node.attrib, node.text.strip(), current_path, node, joined_values])  # 符合條件，加入結果列表
 
@@ -796,6 +813,7 @@ class ComparisonPage_2(ctk.CTkFrame):
     
     def compare_same_key_child(self, before_tag, after_tag):
         '''
+        key一樣的詳細比較
         先確定行數相同，以便逐行比較
         當行數有差異時，空的那邊為""
         將element不相等的存在differences並回傳
@@ -805,34 +823,68 @@ class ComparisonPage_2(ctk.CTkFrame):
         if len(before_tag) == len(after_tag): #相同element的子element數量一樣
             for i in range(len(before_tag)):
                 if before_tag[i].tag != after_tag[i].tag :
-                    print(f"tag不相等 :{before_tag[i].tag} vs {after_tag[i].tag}")
-                    differences.append((i+1, before_tag[i], after_tag[i]))
-                    print('->', before_tag[i].tag, after_tag[i].tag)
+                    differences.append((f'{before_tag[i].tag}{[i]}', 
+                                        f'{after_tag[i].tag}{[i]}', 
+                                        'tag_change', 
+                                        f'{before_tag[i].text} != {after_tag[i].text}', 
+                                        '0'))
                     
                 if before_tag[i].attrib != after_tag[i].attrib :
-                    print(f"attribute不相等:{before_tag[i].attrib} vs {after_tag[i].attrib}")
-                    differences.append((i+1, before_tag[i].attrib, after_tag[i].attrib))
+                    differences.append((f'{before_tag[i].tag}{[i]}', 
+                                        f'{after_tag[i].tag}{[i]}', 
+                                        'attribute_change', 
+                                        f'{before_tag[i].attrib} != {after_tag[i].attrib}', 
+                                        '0'))
                     
                 if before_tag[i].text != after_tag[i].text :
-                    print(f"text不相等:{before_tag[i].text} vs {after_tag[i].text}")
-                    differences.append((i+1, before_tag[i].text, after_tag[i].text ))
+                    differences.append((f'{before_tag[i].tag}{[i]}', 
+                                        f'{after_tag[i].tag}{[i]}', 
+                                        'text_change', 
+                                        f'{before_tag[i].text} != {after_tag[i].text}', 
+                                        '0'))
                     
         else:#相同element的子element數量不一樣！！   
             min_lines = min(len(before_tag), len(after_tag))
             for i in range(min_lines):
-                if not self.compare_same_key_child(before_tag[i], after_tag[i]):
-                    continue
+                if before_tag[i].tag != after_tag[i].tag :
+                    differences.append((f'{before_tag[i].tag}{[i]}', 
+                                        f'{after_tag[i].tag}{[i]}', 
+                                        'tag_change', 
+                                        f'{before_tag[i].text} != {after_tag[i].text}', 
+                                        '0'))
+                    
+                if before_tag[i].attrib != after_tag[i].attrib :
+                    differences.append((f'{before_tag[i].tag}{[i]}', 
+                                        f'{after_tag[i].tag}{[i]}', 
+                                        'attribute_change', 
+                                        f'{before_tag[i].attrib} != {after_tag[i].attrib}', 
+                                        '0'))
+                    
+                if before_tag[i].text != after_tag[i].text :
+                    differences.append((f'{before_tag[i].tag}{[i]}', 
+                                        f'{after_tag[i].tag}{[i]}', 
+                                        'text_change', 
+                                        f'{before_tag[i].text} != {after_tag[i].text}', 
+                                        '0'))
+                    
                 
             if len(before_tag) > len(after_tag):
                 for i in range(min_lines, len(before_tag)):
-                    print(f"刪除： {before_tag.tag}/{ET.tostring(before_tag[i], encoding='unicode').strip()}")
-                    differences.append((i+1, before_tag[i].tag, ""))
+                    differences.append((f'{before_tag[i].tag}{[i]}', 
+                                        '', 
+                                        'delete', 
+                                        f'{before_tag[i].text} != ', 
+                                        '0'))
             elif len(after_tag) > len(before_tag):
                 for i in range(min_lines, len(after_tag)):
-                    print(f"新增: {after_tag.tag}/{ET.tostring(after_tag[i], encoding='unicode').strip()}")
-                    differences.append((i+1, "", after_tag[i].tag))
+                    differences.append(('', 
+                                        f'{after_tag[i].tag}{[i]}', 
+                                        'insert', 
+                                        f' != {after_tag[i].text}', 
+                                        '0'))
 
         return differences
+    
     def export_to_excel(self, results, excel_file_path):
         '''
         印出excel檔案
@@ -924,7 +976,7 @@ class ComparisonPage_2(ctk.CTkFrame):
         file_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.txt")
         exl_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.xlsx")
 
-        results = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
-        changed_result = self.compare_tag_and_path(self.before_file_directory, self.after_file_directory, exclude_tags)
-        # self.print_fixedtag_file(file_path, exclude_tags, results, matches)
-        # self.export_to_excel(results, exl_path)
+        fixed_results = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
+        changed_a_tag_result, changed_tags_result= self.load_tag_and_path(self.before_file_directory, self.after_file_directory, exclude_tags)
+        # self.print_fixedtag_file(file_path, exclude_tags, fixed_results, matches)
+        # self.export_to_excel(fixed_results, exl_path)
