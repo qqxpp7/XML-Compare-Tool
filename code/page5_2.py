@@ -690,9 +690,11 @@ class ComparisonPage_2(ctk.CTkFrame):
                     b_count = self.get_attribute(before_root, tag_path1, tag_path2)
                     a_count = self.get_attribute(after_root, tag_path1, tag_path2)
                     
-                    if max(len(b_count), len(a_count)) == 1:
+                    if max(len(b_count), len(a_count)) == 0:
+                        break
+                    elif max(len(b_count), len(a_count)) == 1:
                         print("元素只出現一次")
-                        self.compare_a_key(b_count[0], a_count[0], tag_path2)
+                        self.compare_a_key(b_count[0], a_count[0], tag_path2)                        
                     else:                
                         #b_count,a_count --> [0]是index，[1]是key，[2]是element
                         # 找出 list1 中不存在於 list2 中的項目       
