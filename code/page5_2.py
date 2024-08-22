@@ -671,7 +671,8 @@ class ComparisonPage_2(ctk.CTkFrame):
     def compare_tag_and_path(self, folder1, folder2, tags):
         folder1 = Path(folder1)
         folder2 = Path(folder2)
-        results = []
+        self.alone_result = []
+        self.plural_results = []
         
         for file1 in folder1.glob('*.xml'):
             file2 = folder2 / file1.name
@@ -693,12 +694,11 @@ class ComparisonPage_2(ctk.CTkFrame):
                     if max(len(b_count), len(a_count)) == 0:
                         break
                     elif max(len(b_count), len(a_count)) == 1:
-                        print("元素只出現一次")
-                        self.compare_a_key(b_count[0], a_count[0], tag_path2)                        
+                        self.alone_result = self.compare_a_key(b_count[0], a_count[0], tag_path2) 
+                        print(self.alone_result)
                     else:                
                         #b_count,a_count --> [0]是index，[1]是key，[2]是element
                         # 找出 list1 中不存在於 list2 中的項目       
-                        print("元素出現多次")
                         not_in_after = []
                         for b in b_count:
                             lv_flag = False
@@ -769,28 +769,30 @@ class ComparisonPage_2(ctk.CTkFrame):
         當before_tag為空，after_tag不為空，則是新增
         
         '''
-        if before_tag != None and after_tag == None:
-            delete_tag = []
+        delete_tag = []
+        insert_tag = []
+        attribute_change = []
+        text_change = []
+        place_change = []
+        
+        if before_tag != None and after_tag == None: 
             delete_tag.append(f"{tag_name}")
             print(f"delete:{delete_tag}")
         elif before_tag == None and after_tag != None:
-            insert_tag = []
+            
             insert_tag.append(f"{tag_name}")
             print(f"insert:{insert_tag}")
         else:
-            attribute_change = []
-            text_change = []
-            place_change = []
-            
             if before_tag[1] != after_tag[1]:
-                attribute_change.append(f"{tag_name}")
+                attribute_change.append(f"attribute change: {before_tag[1]} != {after_tag[1]}")
                 print(attribute_change)
             if before_tag[2] != after_tag[2]:
-                text_change.append(f"{tag_name}")
+                text_change.append(f"text change: {before_tag[2]} != {after_tag[2]}")
                 print(text_change)
             if before_tag[3] != after_tag[3]:
-                place_change.append(f"{tag_name}")
+                place_change.append(f"place change: {before_tag[3]} != {after_tag[3]}")
                 print(place_change)
+        return ([delete_tag, insert_tag, attribute_change, text_change, place_change])
     
     def compare_same_key_child(self, before_tag, after_tag):
         '''
