@@ -688,8 +688,10 @@ class ComparisonPage_2(ctk.CTkFrame):
                 alone_result, plural_results = self.compare_tag_and_path(file1, file2, tags)
                 #回傳獨自tag跟複數tag的差異，前面要再新增key(檔案名稱)
                 
-                self.alone_result += [file1.name, alone_result]
-                self.plural_results += [file1.name, plural_results]
+                alone_result.insert(0, f'{file1.name}')
+                plural_results.insert(0, f'{file1.name}')
+                self.alone_result += alone_result
+                self.plural_results += plural_results
                 print(self.alone_result, self.plural_results)
         return (self.alone_result, self.plural_results)     
     
