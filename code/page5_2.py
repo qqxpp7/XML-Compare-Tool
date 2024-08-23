@@ -799,14 +799,14 @@ class ComparisonPage_2(ctk.CTkFrame):
             
             return ([file_name, 
                      before_tag[0], before_tag[1], before_tag[2], before_tag[3],
-                     "空", "空", "空", "空",
+                     "", "", "", "",
                      delete_tag, insert_tag, attribute_change, text_change, place_change])  
         
         elif before_tag == None and after_tag != None:
             insert_tag.append("V")
             
             return ([file_name, 
-                 "空", "空", "空", "空",
+                 "", "", "", "",
                  after_tag[0], after_tag[1], after_tag[2], after_tag[3],
                  delete_tag, insert_tag, attribute_change, text_change, place_change])
         else:
@@ -841,7 +841,7 @@ class ComparisonPage_2(ctk.CTkFrame):
                                         f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'tag_change', 
                                         f'{before_tag[i].text} != {after_tag[i].text}', 
-                                        '0'))
+                                        f'{len(before_tag[i])}'))
                     
                 if before_tag[i].attrib != after_tag[i].attrib :
                     differences.append((f'{file_name}',
@@ -849,7 +849,7 @@ class ComparisonPage_2(ctk.CTkFrame):
                                         f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'attribute_change', 
                                         f'{before_tag[i].attrib} != {after_tag[i].attrib}', 
-                                        '0'))
+                                        f'{len(before_tag[i])}'))
                     
                 if before_tag[i].text != after_tag[i].text :
                     differences.append((f'{file_name}',
@@ -857,7 +857,7 @@ class ComparisonPage_2(ctk.CTkFrame):
                                         f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'text_change', 
                                         f'{before_tag[i].text} != {after_tag[i].text}', 
-                                        '0'))
+                                        f'{len(before_tag[i])}'))
                     
         else:#相同element的子element數量不一樣！！   
             min_lines = min(len(before_tag), len(after_tag))
@@ -894,7 +894,7 @@ class ComparisonPage_2(ctk.CTkFrame):
                                         '', 
                                         'delete', 
                                         f'{before_tag[i].text} != ', 
-                                        '0'))
+                                        f'{len(before_tag[i])}'))
             elif len(after_tag) > len(before_tag):
                 for i in range(min_lines, len(after_tag)):
                     differences.append((f'{file_name}',
@@ -902,11 +902,11 @@ class ComparisonPage_2(ctk.CTkFrame):
                                         f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'insert', 
                                         f' != {after_tag[i].text}', 
-                                        '0'))
+                                        f'{len(after_tag[i])}'))
 
         return differences
     
-    def export_to_excel(self, results, excel_file_path):
+    def export_to_fixed_excel(self, results, excel_file_path):
         '''
         印出excel檔案
         分別有流水號(自動生成)、檔名(key)、xmlpath、差異類型(type)
@@ -922,6 +922,25 @@ class ComparisonPage_2(ctk.CTkFrame):
                rows.append([file_name, after_path, tag, attribute, text])
                        
         df = pd.DataFrame(rows, columns=['Key', 'After path', 'Tag', 'Attribute', 'Text'])
+        df.to_excel(excel_file_path, index=True)
+        print(f'Excel report generated at: {excel_file_path}')
+        
+        if os.name == 'nt':
+            os.startfile(excel_file_path)
+            
+    def export_to_a_tag_excel(self, results, excel_file_path):
+        '''
+        印出excel檔案
+        分別有流水號(自動生成)、before(Tag、Attribute、Text、Path)、after(Tag、Attribute、Text、Path)、
+        delete、insert、text change、attribute change、place change
+        '''
+        
+        data = [None if isinstance(item, list) and not item else item for item in results]
+                       
+        df = pd.DataFrame([data], columns=['Key', 'Before tag', 'Before attribute', 'Before text', 'Before path',
+                                         'After tag', 'After attribute', 'After text', 'After path',
+                                         'delete', 'insert', 'text change', 'attribute change', 'place change'
+                                         ])
         df.to_excel(excel_file_path, index=True)
         print(f'Excel report generated at: {excel_file_path}')
         
@@ -992,10 +1011,20 @@ class ComparisonPage_2(ctk.CTkFrame):
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         fixed_tag_new_folder = os.path.join(sd.report_output_path.get(), "fixed_tag_report")
         os.makedirs(fixed_tag_new_folder, exist_ok=True)
-        file_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.txt")
-        exl_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.xlsx")
+        fixed_file_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.txt")
+        fixed_exl_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.xlsx")
+        
+        changed_a_tag_new_folder = os.path.join(sd.report_output_path.get(), "changed_a_tag_report")
+        os.makedirs(changed_a_tag_new_folder, exist_ok=True)
+        changed_a_tag_exl_path = os.path.join(changed_a_tag_new_folder, f"changed_a_tag_{current_time}.xlsx")
+        
+        changed_tags_new_folder = os.path.join(sd.report_output_path.get(), "changed_tags_report")
+        os.makedirs(changed_tags_new_folder, exist_ok=True)
+        changed_tags_exl_path = os.path.join(changed_tags_new_folder, f"changed_tags_{current_time}.xlsx")
 
         fixed_results = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
         changed_a_tag_result, changed_tags_result= self.load_tag_and_path(self.before_file_directory, self.after_file_directory, exclude_tags)
-        # self.print_fixedtag_file(file_path, exclude_tags, fixed_results, matches)
-        # self.export_to_excel(fixed_results, exl_path)
+        # self.print_fixedtag_file(fixed_file_path, exclude_tags, fixed_results, matches)
+        # self.export_to_fixed_excel(fixed_results, fixed_exl_path)
+        self.export_to_a_tag_excel(changed_a_tag_result, changed_a_tag_exl_path)
+        # self.export_to_fixed_excel(changed_tags_result, changed_a_tag_exl_path)
