@@ -688,11 +688,12 @@ class ComparisonPage_2(ctk.CTkFrame):
                 alone_result, plural_results = self.compare_tag_and_path(file1, file2, tags)
                 #回傳獨自tag跟複數tag的差異，前面要再新增key(檔案名稱)
                 
-                alone_result.insert(0, f'{file1.name}')
-                plural_results.insert(0, f'{file1.name}')
-                self.alone_result += alone_result
-                self.plural_results += plural_results
-                print(self.alone_result, self.plural_results)
+                
+                self.alone_result.append([file1.name] + alone_result)
+                self.plural_results.append([file1.name] + plural_results)
+
+                for i in range(len(self.plural_results)):
+                    print(f"檔案:{self.plural_results[i][0]}, {self.plural_results[i][1]}")
         return (self.alone_result, self.plural_results)     
     
     def compare_tag_and_path(self, file1, file2, tags):
@@ -700,6 +701,8 @@ class ComparisonPage_2(ctk.CTkFrame):
         一個檔案的比較
         比較兩個檔案的的變動element
         b_count, a_count --> [i][0]是tag，[i][1]是attrbute，[i][2]是text，[i][3]是path，[i][4]是element
+        differences --> delete、insert、tag change、attribute change、text change
+        differences1 --> [0]是before tag，[1]是after tag，[2]是type，[3]是text或attribute，[4]是child number
         '''
         before_tree = ET.parse(file1)
         before_root = before_tree.getroot()
@@ -719,6 +722,7 @@ class ComparisonPage_2(ctk.CTkFrame):
                 break
             elif max(len(b_count), len(a_count)) == 1:
                 differences = self.compare_a_key(b_count[0], a_count[0], tag_path2) 
+                
             else:                
                 # 找出 list1 中不存在於 list2 中的項目       
                 not_in_after = []
@@ -731,8 +735,8 @@ class ComparisonPage_2(ctk.CTkFrame):
                         if b[5] == a[5]: #key相等，對比底下所有的子element 
 
                             differences1 = self.compare_same_key_child(b[4], a[4])                            
-                            for diff in differences1:
-                                print(diff)
+                            # for diff in differences1:
+                            #     print(diff)
                             lv_flag = True  
                             break
                                                         
@@ -796,21 +800,20 @@ class ComparisonPage_2(ctk.CTkFrame):
         
         if before_tag != None and after_tag == None: 
             delete_tag.append(f"{tag_name}")
-            print(f"delete:{delete_tag}")
-        elif before_tag == None and after_tag != None:
             
+        elif before_tag == None and after_tag != None:
             insert_tag.append(f"{tag_name}")
-            print(f"insert:{insert_tag}")
+            
         else:
             if before_tag[1] != after_tag[1]:
                 attribute_change.append(f"attribute change: {before_tag[1]} != {after_tag[1]}")
-                print(attribute_change)
+
             if before_tag[2] != after_tag[2]:
                 text_change.append(f"text change: {before_tag[2]} != {after_tag[2]}")
-                print(text_change)
+                
             if before_tag[3] != after_tag[3]:
                 place_change.append(f"place change: {before_tag[3]} != {after_tag[3]}")
-                print(place_change)
+                
         return ([delete_tag, insert_tag, attribute_change, text_change, place_change])
     
     def compare_same_key_child(self, before_tag, after_tag):
@@ -890,22 +893,20 @@ class ComparisonPage_2(ctk.CTkFrame):
     def export_to_excel(self, results, excel_file_path):
         '''
         印出excel檔案
-        分別有流水號、檔名(key)、xmlpath、差異類型(type)
+        分別有流水號(自動生成)、檔名(key)、xmlpath、差異類型(type)
         '''
         rows = []
-        serial_number = 1
-       
+        
         for res in results:
            file_name = res[0]
            changes = res[1]
            for change in changes:
                
                key, after_path, tag, attribute, text = change
-               rows.append([serial_number, file_name, after_path, tag, attribute, text])
-               serial_number += 1
-        
-        df = pd.DataFrame(rows, columns=['', 'Key', 'After path', 'Tag', 'Attribute', 'Text'])
-        df.to_excel(excel_file_path, index=False)
+               rows.append([file_name, after_path, tag, attribute, text])
+                       
+        df = pd.DataFrame(rows, columns=['Key', 'After path', 'Tag', 'Attribute', 'Text'])
+        df.to_excel(excel_file_path, index=True)
         print(f'Excel report generated at: {excel_file_path}')
         
         if os.name == 'nt':
