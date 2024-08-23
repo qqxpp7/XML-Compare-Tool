@@ -678,22 +678,17 @@ class ComparisonPage_2(ctk.CTkFrame):
         '''
         folder1 = Path(folder1)
         folder2 = Path(folder2)
-        self.alone_result = []
-        self.plural_results = []
         
         for file1 in folder1.glob('*.xml'):
             file2 = folder2 / file1.name
             if file2.exists():
                 
-                alone_result, plural_results = self.compare_tag_and_path(file1, file2, tags)
+                self.alone_result, self.plural_results = self.compare_tag_and_path(file1, file2, tags)
                 #回傳獨自tag跟複數tag的差異，前面要再新增key(檔案名稱)
                 
-                
-                self.alone_result.append([file1.name] + alone_result)
-                self.plural_results.append([file1.name] + plural_results)
-
-                for i in range(len(self.plural_results)):
-                    print(f"檔案:{self.plural_results[i][0]}, {self.plural_results[i][1]}")
+                                
+                print(f"檔案:{self.alone_result}")
+                print(f"檔案:{self.plural_results}")
         return (self.alone_result, self.plural_results)     
     
     def compare_tag_and_path(self, file1, file2, tags):
@@ -721,7 +716,8 @@ class ComparisonPage_2(ctk.CTkFrame):
             if max(len(b_count), len(a_count)) == 0:
                 break
             elif max(len(b_count), len(a_count)) == 1:
-                differences = self.compare_a_key(b_count[0], a_count[0], tag_path2) 
+                differences = self.compare_a_key(file1.name, b_count[0]if b_count else None
+                                                 , a_count[0]if a_count else None, tag_path2) 
                 
             else:                
                 # 找出 list1 中不存在於 list2 中的項目       
@@ -734,7 +730,7 @@ class ComparisonPage_2(ctk.CTkFrame):
                         # print('->', b[5], '-->', a[5])
                         if b[5] == a[5]: #key相等，對比底下所有的子element 
 
-                            differences1 = self.compare_same_key_child(b[4], a[4])                            
+                            differences1 = self.compare_same_key_child(file1.name, b[3], a[3], b[4], a[4])                            
                             # for diff in differences1:
                             #     print(diff)
                             lv_flag = True  
@@ -786,7 +782,7 @@ class ComparisonPage_2(ctk.CTkFrame):
 
         return results
     
-    def compare_a_key(self, before_tag, after_tag, tag_name):
+    def compare_a_key(self, file_name, before_tag, after_tag, tag_name):
         '''
         當before_tag不為空，after_tag為空，則是刪除
         當before_tag為空，after_tag不為空，則是新增
@@ -799,24 +795,36 @@ class ComparisonPage_2(ctk.CTkFrame):
         place_change = []
         
         if before_tag != None and after_tag == None: 
-            delete_tag.append(f"{tag_name}")
+            delete_tag.append("V")
             
+            return ([file_name, 
+                     before_tag[0], before_tag[1], before_tag[2], before_tag[3],
+                     "空", "空", "空", "空",
+                     delete_tag, insert_tag, attribute_change, text_change, place_change])  
+        
         elif before_tag == None and after_tag != None:
-            insert_tag.append(f"{tag_name}")
+            insert_tag.append("V")
             
+            return ([file_name, 
+                 "空", "空", "空", "空",
+                 after_tag[0], after_tag[1], after_tag[2], after_tag[3],
+                 delete_tag, insert_tag, attribute_change, text_change, place_change])
         else:
             if before_tag[1] != after_tag[1]:
-                attribute_change.append(f"attribute change: {before_tag[1]} != {after_tag[1]}")
+                attribute_change.append("V")
 
             if before_tag[2] != after_tag[2]:
-                text_change.append(f"text change: {before_tag[2]} != {after_tag[2]}")
+                text_change.append("V")
                 
             if before_tag[3] != after_tag[3]:
-                place_change.append(f"place change: {before_tag[3]} != {after_tag[3]}")
+                place_change.append("V")
                 
-        return ([delete_tag, insert_tag, attribute_change, text_change, place_change])
+            return ([file_name, 
+                 before_tag[0], before_tag[1], before_tag[2], before_tag[3],
+                 after_tag[0], after_tag[1], after_tag[2], after_tag[3],
+                 delete_tag, insert_tag, attribute_change, text_change, place_change])
     
-    def compare_same_key_child(self, before_tag, after_tag):
+    def compare_same_key_child(self, file_name, before_path, after_path, before_tag, after_tag):
         '''
         key一樣的詳細比較
         先確定行數相同，以便逐行比較
@@ -828,22 +836,25 @@ class ComparisonPage_2(ctk.CTkFrame):
         if len(before_tag) == len(after_tag): #相同element的子element數量一樣
             for i in range(len(before_tag)):
                 if before_tag[i].tag != after_tag[i].tag :
-                    differences.append((f'{before_tag[i].tag}{[i]}', 
-                                        f'{after_tag[i].tag}{[i]}', 
+                    differences.append((f'{file_name}',
+                                        f'{before_path}/{before_tag[i].tag}{[i]}', 
+                                        f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'tag_change', 
                                         f'{before_tag[i].text} != {after_tag[i].text}', 
                                         '0'))
                     
                 if before_tag[i].attrib != after_tag[i].attrib :
-                    differences.append((f'{before_tag[i].tag}{[i]}', 
-                                        f'{after_tag[i].tag}{[i]}', 
+                    differences.append((f'{file_name}',
+                                        f'{before_path}/{before_tag[i].tag}{[i]}', 
+                                        f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'attribute_change', 
                                         f'{before_tag[i].attrib} != {after_tag[i].attrib}', 
                                         '0'))
                     
                 if before_tag[i].text != after_tag[i].text :
-                    differences.append((f'{before_tag[i].tag}{[i]}', 
-                                        f'{after_tag[i].tag}{[i]}', 
+                    differences.append((f'{file_name}',
+                                        f'{before_path}/{before_tag[i].tag}{[i]}', 
+                                        f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'text_change', 
                                         f'{before_tag[i].text} != {after_tag[i].text}', 
                                         '0'))
@@ -852,22 +863,25 @@ class ComparisonPage_2(ctk.CTkFrame):
             min_lines = min(len(before_tag), len(after_tag))
             for i in range(min_lines):
                 if before_tag[i].tag != after_tag[i].tag :
-                    differences.append((f'{before_tag[i].tag}{[i]}', 
-                                        f'{after_tag[i].tag}{[i]}', 
+                    differences.append((f'{file_name}',
+                                        f'{before_path}/{before_tag[i].tag}{[i]}', 
+                                        f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'tag_change', 
                                         f'{before_tag[i].text} != {after_tag[i].text}', 
                                         '0'))
                     
                 if before_tag[i].attrib != after_tag[i].attrib :
-                    differences.append((f'{before_tag[i].tag}{[i]}', 
-                                        f'{after_tag[i].tag}{[i]}', 
+                    differences.append((f'{file_name}',
+                                        f'{before_path}/{before_tag[i].tag}{[i]}', 
+                                        f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'attribute_change', 
                                         f'{before_tag[i].attrib} != {after_tag[i].attrib}', 
                                         '0'))
                     
                 if before_tag[i].text != after_tag[i].text :
-                    differences.append((f'{before_tag[i].tag}{[i]}', 
-                                        f'{after_tag[i].tag}{[i]}', 
+                    differences.append((f'{file_name}',
+                                        f'{before_path}/{before_tag[i].tag}{[i]}', 
+                                        f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'text_change', 
                                         f'{before_tag[i].text} != {after_tag[i].text}', 
                                         '0'))
@@ -875,15 +889,17 @@ class ComparisonPage_2(ctk.CTkFrame):
                 
             if len(before_tag) > len(after_tag):
                 for i in range(min_lines, len(before_tag)):
-                    differences.append((f'{before_tag[i].tag}{[i]}', 
+                    differences.append((f'{file_name}',
+                                        f'{before_path}/{before_tag[i].tag}{[i]}', 
                                         '', 
                                         'delete', 
                                         f'{before_tag[i].text} != ', 
                                         '0'))
             elif len(after_tag) > len(before_tag):
                 for i in range(min_lines, len(after_tag)):
-                    differences.append(('', 
-                                        f'{after_tag[i].tag}{[i]}', 
+                    differences.append((f'{file_name}',
+                                        '', 
+                                        f'{after_path}/{after_tag[i].tag}{[i]}', 
                                         'insert', 
                                         f' != {after_tag[i].text}', 
                                         '0'))
