@@ -683,13 +683,16 @@ class ComparisonPage_2(ctk.CTkFrame):
             file2 = folder2 / file1.name
             if file2.exists():
                 
-                self.alone_result, self.plural_results = self.compare_tag_and_path(file1, file2, tags)
-                #回傳獨自tag跟複數tag的差異，前面要再新增key(檔案名稱)
-                
-                                
-                print(f"檔案:{self.alone_result}")
-                print(f"檔案:{self.plural_results}")
+                alone_result, plural_results = self.compare_tag_and_path(file1, file2, tags)
+                #回傳單獨tag跟複數tag的差異，前面要再新增key(檔案名稱)
+
+                self.alone_result += alone_result
+                self.plural_results += plural_results
+                                                
+                print(f"單獨tag檔案:{self.alone_result}")
+                print(f"複數檔案:{self.plural_results}")
         return (self.alone_result, self.plural_results)     
+   
     
     def compare_tag_and_path(self, file1, file2, tags):
         '''
@@ -716,12 +719,12 @@ class ComparisonPage_2(ctk.CTkFrame):
             if max(len(b_count), len(a_count)) == 0:
                 break
             elif max(len(b_count), len(a_count)) == 1:
-                differences = self.compare_a_key(file1.name, b_count[0]if b_count else None
+                differences += self.compare_a_key(file1.name, b_count[0]if b_count else None
                                                  , a_count[0]if a_count else None, tag_path2) 
                 
             else:                
                 # 找出 list1 中不存在於 list2 中的項目       
-                not_in_after = []
+            
                 for b in b_count:
                     lv_flag = False
                     for a in a_count:
@@ -729,18 +732,28 @@ class ComparisonPage_2(ctk.CTkFrame):
                         # if lv_flag: continue
                         # print('->', b[5], '-->', a[5])
                         if b[5] == a[5]: #key相等，對比底下所有的子element 
-
-                            differences1 = self.compare_same_key_child(file1.name, b[3], a[3], b[4], a[4])                            
-                            # for diff in differences1:
-                            #     print(diff)
+                            differences1 += self.compare_same_key_child(file1.name, b[3], a[3], b[4], a[4])
                             lv_flag = True  
                             break
                                                         
                     if lv_flag == False:
-                        not_in_after.append([b[3], "delete", len(b[4])])
+                        # not_in_after.append([b[3], "delete", len(b[4])])
+                        differences1.append((f'{file1.name}',
+                                            f'{b[3]}', 
+                                            '', 
+                                            'delete', 
+                                            f'{b[4].text} != ', 
+                                            f'{len(b[4])}'))
+                        if len(b[4]) > 0:
+                            for i in range(len(b[4])):
+                                differences1.append((f'{file1.name}',
+                                                    f'{b[3]}/{b[4][i].tag}[{i}]', 
+                                                    '', 
+                                                    'delete child', 
+                                                    f'{b[4][i].text}!= ', 
+                                                    f'{len(b[4][i])}'))
+                            # 找出 list2 中不存在於 list1 中的項目
                 
-                # 找出 list2 中不存在於 list1 中的項目
-                not_in_before = []
                 for a in a_count:
                     lv_flag_2 = False
                     for b in b_count:
@@ -750,10 +763,20 @@ class ComparisonPage_2(ctk.CTkFrame):
                             break
                                                     
                     if lv_flag_2 == False:    
-                        not_in_before.append([a[3],"insert", len(a[4])])              
-                    
-                print(f"before有after沒有：{not_in_after}")
-                print(f"before沒有after有：{not_in_before}")
+                        differences1.append((f'{file1.name}',                                             
+                                            '', 
+                                            f'{b[3]}',
+                                            'insert', 
+                                            f' !={b[4].text}', 
+                                            f'{len(b[4])}'))
+                        if len(b[4]) > 0:
+                           for i in range(len(b[4])):             
+                               differences1.append((f'{file1.name}',                                             
+                                                   '', 
+                                                   f'{b[3]}/{b[4][i].tag}[{i}]',
+                                                   'insert child', 
+                                                   f' !={b[4][i].text}', 
+                                                   f'{len(b[4][i])}'))
         return (differences, differences1)
     
     def get_attribute(self, lv_root, lv_parent_tag, lv_tag):
@@ -772,7 +795,7 @@ class ComparisonPage_2(ctk.CTkFrame):
 
             # 檢查當前節點是否符合特定條件
             if node.tag == lv_tag  and parent_tag == lv_parent_tag:
-                values = [child.text for child in list(node)[:2]]
+                values = [child.text for child in list(node)[:5]]
                 joined_values = '_'.join(values) 
                 results.append([node.tag, node.attrib, node.text.strip(), current_path, node, joined_values])  # 符合條件，加入結果列表
 
@@ -835,14 +858,15 @@ class ComparisonPage_2(ctk.CTkFrame):
 
         if len(before_tag) == len(after_tag): #相同element的子element數量一樣
             for i in range(len(before_tag)):
-                if before_tag[i].tag != after_tag[i].tag :
+                if before_tag[i].tag != after_tag[i].tag:
+                    text_comparison = '!=' if before_tag[i].text != after_tag[i].text else '='
                     differences.append((f'{file_name}',
-                                        f'{before_path}/{before_tag[i].tag}{[i]}', 
-                                        f'{after_path}/{after_tag[i].tag}{[i]}', 
-                                        'tag_change', 
-                                        f'{before_tag[i].text} != {after_tag[i].text}', 
-                                        f'{len(before_tag[i])}'))
-                    
+                                        f'{before_path}/{before_tag[i].tag}[{i}]',
+                                        f'{after_path}/{after_tag[i].tag}[{i}]',
+                                        'tag_change',
+                                        f'{before_tag[i].text} {text_comparison} {after_tag[i].text}',
+                                        f'{len(before_tag[i])}'))                    
+                         
                 if before_tag[i].attrib != after_tag[i].attrib :
                     differences.append((f'{file_name}',
                                         f'{before_path}/{before_tag[i].tag}{[i]}', 
@@ -862,12 +886,13 @@ class ComparisonPage_2(ctk.CTkFrame):
         else:#相同element的子element數量不一樣！！   
             min_lines = min(len(before_tag), len(after_tag))
             for i in range(min_lines):
-                if before_tag[i].tag != after_tag[i].tag :
+                if before_tag[i].tag != after_tag[i].tag :                   
+                    text_comparison = '!=' if before_tag[i].text != after_tag[i].text else '='
                     differences.append((f'{file_name}',
-                                        f'{before_path}/{before_tag[i].tag}{[i]}', 
-                                        f'{after_path}/{after_tag[i].tag}{[i]}', 
-                                        'tag_change', 
-                                        f'{before_tag[i].text} != {after_tag[i].text}', 
+                                        f'{before_path}/{before_tag[i].tag}[{i}]',
+                                        f'{after_path}/{after_tag[i].tag}[{i}]',
+                                        'tag_change',
+                                        f'{before_tag[i].text} {text_comparison} {after_tag[i].text}',
                                         '0'))
                     
                 if before_tag[i].attrib != after_tag[i].attrib :
@@ -938,11 +963,12 @@ class ComparisonPage_2(ctk.CTkFrame):
             data = [''] * 14  # 使用空字符串替換空資料
         else:
             # 將空的列表或空字符串替換為空字符串
-            data = ['' if isinstance(item, list) and not item else item for item in results]
-                  
-        df = pd.DataFrame([data], columns=['Key', 'Before tag', 'Before attribute', 'Before text', 'Before path',
+            data = [item if isinstance(item, str) else ''.join(item) for item in results]
+        
+        rows = [data[i:i + 14] for i in range(0, len(data), 14)]
+        df = pd.DataFrame(rows, columns=['Key', 'Before tag', 'Before attribute', 'Before text', 'Before path',
                                          'After tag', 'After attribute', 'After text', 'After path',
-                                         'delete', 'insert', 'text change', 'attribute change', 'place change'
+                                         'delete', 'insert', 'attribute change', 'text change', 'place change'
                                          ])
         df.to_excel(excel_file_path, index=True)
         
@@ -1041,8 +1067,10 @@ class ComparisonPage_2(ctk.CTkFrame):
         changed_tags_exl_path = os.path.join(changed_tags_new_folder, f"changed_tags_{current_time}.xlsx")
 
         fixed_results = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
+        self.alone_result = []
+        self.plural_results = []
         changed_a_tag_result, changed_tags_result= self.load_tag_and_path(self.before_file_directory, self.after_file_directory, exclude_tags)
         # self.print_fixedtag_file(fixed_file_path, exclude_tags, fixed_results, matches)
-        self.export_to_fixed_excel(fixed_results, fixed_exl_path)
+        # self.export_to_fixed_excel(fixed_results, fixed_exl_path)
         self.export_to_a_tag_excel(changed_a_tag_result, changed_a_tag_exl_path)
-        self.export_to_tags_excel(changed_tags_result, changed_tags_exl_path)
+        # self.export_to_tags_excel(changed_tags_result, changed_tags_exl_path)
