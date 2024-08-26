@@ -923,29 +923,43 @@ class ComparisonPage_2(ctk.CTkFrame):
                        
         df = pd.DataFrame(rows, columns=['Key', 'After path', 'Tag', 'Attribute', 'Text'])
         df.to_excel(excel_file_path, index=True)
-        print(f'Excel report generated at: {excel_file_path}')
         
         if os.name == 'nt':
             os.startfile(excel_file_path)
             
     def export_to_a_tag_excel(self, results, excel_file_path):
         '''
-        印出excel檔案
+        印出單獨變動excel檔案
         分別有流水號(自動生成)、before(Tag、Attribute、Text、Path)、after(Tag、Attribute、Text、Path)、
         delete、insert、text change、attribute change、place change
         '''
         
-        data = [None if isinstance(item, list) and not item else item for item in results]
-                       
+        if not results:
+            data = [''] * 14  # 使用空字符串替換空資料
+        else:
+            # 將空的列表或空字符串替換為空字符串
+            data = ['' if isinstance(item, list) and not item else item for item in results]
+                  
         df = pd.DataFrame([data], columns=['Key', 'Before tag', 'Before attribute', 'Before text', 'Before path',
                                          'After tag', 'After attribute', 'After text', 'After path',
                                          'delete', 'insert', 'text change', 'attribute change', 'place change'
                                          ])
         df.to_excel(excel_file_path, index=True)
-        print(f'Excel report generated at: {excel_file_path}')
         
         if os.name == 'nt':
             os.startfile(excel_file_path)
+            
+    def export_to_tags_excel(self, results, excel_file_path):
+         '''
+         印出變動複數excel檔案
+         分別有流水號(自動生成)、Key(檔案名稱)、before Path、after Path、type、text、child number
+         '''
+                       
+         df = pd.DataFrame(results, columns=['Key', 'Before path', 'After path', 'type', 'text', 'child number'])
+         df.to_excel(excel_file_path, index=True)
+         
+         if os.name == 'nt':
+             os.startfile(excel_file_path)
             
     def print_fixedtag_file(self, file_path, exclude_tags, results, matches):
         '''
@@ -1009,15 +1023,19 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.after_file_directory = self.find_folders_with_split(sd.after_path.get())
         
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        #固定報表
         fixed_tag_new_folder = os.path.join(sd.report_output_path.get(), "fixed_tag_report")
         os.makedirs(fixed_tag_new_folder, exist_ok=True)
         fixed_file_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.txt")
         fixed_exl_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.xlsx")
         
+        #變動單獨報表
         changed_a_tag_new_folder = os.path.join(sd.report_output_path.get(), "changed_a_tag_report")
         os.makedirs(changed_a_tag_new_folder, exist_ok=True)
         changed_a_tag_exl_path = os.path.join(changed_a_tag_new_folder, f"changed_a_tag_{current_time}.xlsx")
         
+        #變動複數報表
         changed_tags_new_folder = os.path.join(sd.report_output_path.get(), "changed_tags_report")
         os.makedirs(changed_tags_new_folder, exist_ok=True)
         changed_tags_exl_path = os.path.join(changed_tags_new_folder, f"changed_tags_{current_time}.xlsx")
@@ -1025,6 +1043,6 @@ class ComparisonPage_2(ctk.CTkFrame):
         fixed_results = self.compare_xml_files(self.before_file_directory, self.after_file_directory, exclude_tags)
         changed_a_tag_result, changed_tags_result= self.load_tag_and_path(self.before_file_directory, self.after_file_directory, exclude_tags)
         # self.print_fixedtag_file(fixed_file_path, exclude_tags, fixed_results, matches)
-        # self.export_to_fixed_excel(fixed_results, fixed_exl_path)
+        self.export_to_fixed_excel(fixed_results, fixed_exl_path)
         self.export_to_a_tag_excel(changed_a_tag_result, changed_a_tag_exl_path)
-        # self.export_to_fixed_excel(changed_tags_result, changed_a_tag_exl_path)
+        self.export_to_tags_excel(changed_tags_result, changed_tags_exl_path)
