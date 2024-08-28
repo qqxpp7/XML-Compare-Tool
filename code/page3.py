@@ -73,7 +73,7 @@ class XMLSplitPage(ctk.CTkFrame):
         self.all_nodes_listbox = tk.Listbox(self.left_middle_right_frame, selectmode=tk.SINGLE,
                                             yscrollcommand=self.scrollbar.set, font=("Helvetica",14))
         self.all_nodes_listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
+        self.scrollbar.config(command=self.all_nodes_listbox.yview)
                   
         # 右中間框架
         '''
@@ -321,9 +321,9 @@ class XMLSplitPage(ctk.CTkFrame):
         progress_bar.pack(pady=10)
         
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        repeat_new_folder = os.path.join(sd.report_output_path.get(), "repeat_file")
+        repeat_new_folder = os.path.join(sd.report_output_path.get(), "Split_report")
         os.makedirs(repeat_new_folder, exist_ok=True)
-        file_path = os.path.join(repeat_new_folder, f"repeat_file_{current_time}.txt")
+        file_path = os.path.join(repeat_new_folder, f"Split_report_{current_time}.txt")
         
         self.all_file_path = self.load_xml_files(self.folder_path[0])
         total_files = len(self.all_file_path)  # 計算Before文件數量

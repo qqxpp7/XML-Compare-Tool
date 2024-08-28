@@ -10,7 +10,7 @@ import tkinter as tk
 import customtkinter as ctk
 from datetime import datetime
 import shared_data as sd
-
+from tkinter import messagebox
 
 class FindDifferencesPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -83,27 +83,27 @@ class FindDifferencesPage(ctk.CTkFrame):
         '''
         try:
             if not os.path.exists(self.move_new_folder):
-                self.messagebox.showinfo("錯誤", f"目錄 {self.move_new_folder} 不存在。")
+                messagebox.showinfo("錯誤", f"目錄 {self.move_new_folder} 不存在。")
     
             # 不同操作系統有不同的開啟資料夾方式
             if os.name == 'nt':  # Windows
                 os.startfile(self.move_new_folder)
             else:
-                self.messagebox.showinfo("錯誤", "不支援的操作系統。")
+                messagebox.showinfo("錯誤", "不支援的操作系統。")
                 
         except Exception as e:
-            self.messagebox.showinfo("錯誤", f"發生錯誤: {e}")
+            messagebox.showinfo("錯誤", f"發生錯誤: {e}")
         
     def execute(self):
         '''
-        在報表輸出資料夾下面創立一個different_file資料夾
+        在報表輸出資料夾下面創立一個Different_report資料夾
         會在底下生成差異分析的報表(txt)
         
         透過find_folders_with_split函式找到shared_data before跟after底下的split資料夾
         
         '''
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        different_new_folder = os.path.join(sd.report_output_path.get(), "different_file")
+        different_new_folder = os.path.join(sd.report_output_path.get(), "Different_report")
         os.makedirs(different_new_folder, exist_ok=True)
         report_name = self.report_name_entry.get() + "_" + current_time + '.txt'
         file_path = os.path.join(different_new_folder, report_name)  
@@ -132,7 +132,7 @@ class FindDifferencesPage(ctk.CTkFrame):
             self.move = different_new_folder
             self.print_file(self.report_name_entry.get(), file_path, self.move)
             
-            self.move_new_folder = os.path.join(sd.report_output_path.get(), "move_file")
+            self.move_new_folder = os.path.join(sd.report_output_path.get(), "Move_file")
             os.makedirs(self.move_new_folder, exist_ok=True)
             
             for file in self.before_file_names_2:

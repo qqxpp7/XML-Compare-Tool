@@ -88,7 +88,7 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.y_scrollbar = tk.Scrollbar(self.left_middle_right_frame, orient=tk.VERTICAL, command=self._scroll_both)
         self.y_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.line_numbers = tk.Listbox(self.left_middle_right_frame, width=4, font=("Helvetica", 14))
+        self.line_numbers = tk.Listbox(self.left_middle_right_frame, width=4, font=("Helvetica", 14), yscrollcommand=self._sync_scroll)
         self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
 
         self.left_listbox = tk.Listbox(self.left_middle_right_frame, font=("Helvetica", 14), yscrollcommand=self._sync_scroll)
@@ -118,17 +118,17 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.buttons_frame = ctk.CTkFrame(self.rig_middle_right_frame, bg_color=self.middle_right_frame.cget("bg_color"))
         self.buttons_frame.pack(side=tk.BOTTOM, fill=tk.X)
         
-        self.tag_numbers = tk.Listbox(self.rig_middle_right_frame, width=4, font=("Helvetica", 14))
+        self.tag_numbers = tk.Listbox(self.rig_middle_right_frame, width=4, font=("Helvetica", 14), yscrollcommand=self.right_sync_scroll)
         self.tag_numbers.pack(side=tk.LEFT, fill=tk.Y)
-        self.option_listbox = tk.Listbox(self.rig_middle_right_frame, font=("Helvetica",14))
+        self.option_listbox = tk.Listbox(self.rig_middle_right_frame, font=("Helvetica",14), yscrollcommand=self.right_sync_scroll)
         self.option_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.scrollbar = tk.Scrollbar(self.rig_middle_right_frame, orient=tk.VERTICAL, command=self._scroll_both)
+        self.scrollbar = tk.Scrollbar(self.rig_middle_right_frame, orient=tk.VERTICAL, command=self.right_scroll_both)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        self.option_listbox.config(yscrollcommand=self._sync_scroll)
-        self.tag_numbers.config(yscrollcommand=self._sync_scroll)
-        self.scrollbar.config(command=self._scroll_both)
-        
+
+        self.option_x_scrollbar = tk.Scrollbar(self.option_listbox, orient=tk.HORIZONTAL, command=self.option_listbox.xview)
+        self.option_x_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.option_listbox['xscrollcommand'] = self.option_x_scrollbar.set
+        self.option_listbox.bind("<Key>", lambda e: "break")
         
         self.upload_button = ctk.CTkButton(self.buttons_frame, text="↥上傳", width=60, height=30,
                                    font=("Helvetica", 12), command=lambda: self.upload_file_tag())      
@@ -167,17 +167,39 @@ class ComparisonPage_2(ctk.CTkFrame):
  
     
     def _sync_scroll(self, *args):
+        '''
+        左邊listbox的軸變動
+        拉動Y滾軸時三個listbox會一起變動，滾輪的位置也會變動
+        '''
+        self.y_scrollbar.set(*args)
         self.line_numbers.yview_moveto(args[0])
-        self.tag_numbers.yview_moveto(args[0])
         self.left_listbox.yview_moveto(args[0])
         self.right_listbox.yview_moveto(args[0])
+    
+    def right_sync_scroll(self, *args):
+        '''
+        右邊listbox的軸變動
+        拉動Y滾軸時tag_numbers、option_listbox會一起變動，滾輪的位置也會變動
+        '''
+        self.scrollbar.set(*args)
+        self.tag_numbers.yview_moveto(args[0])
         self.option_listbox.yview_moveto(args[0])
 
     def _scroll_both(self, *args):
+        '''
+        左邊listbox的畫面滾動
+        在三個listbox上面用滑鼠滾輪滑動時，畫面會一起變動
+        '''
         self.line_numbers.yview(*args)
-        self.tag_numbers.yview(*args)
         self.left_listbox.yview(*args)
         self.right_listbox.yview(*args)
+
+    def right_scroll_both(self, *args):
+        '''
+        右邊listbox的畫面滾動
+        在tag_numbers、option_listbox上面用滑鼠滾輪滑動時，畫面會一起變動
+        '''
+        self.tag_numbers.yview(*args)
         self.option_listbox.yview(*args)
         
     def update_tag_numbers(self, event=None):
@@ -588,8 +610,10 @@ class ComparisonPage_2(ctk.CTkFrame):
             changes.append((current_path, after_path, f'{element1.tag} != {element2.tag if element2 is not None else "空"}', '', ''))
         if element1.attrib != (element2.attrib if element2 is not None else {}):
             changes.append((current_path, after_path, '', f'{element1.attrib} != {element2.attrib if element2 is not None else {}}', ''))
-        if element1.text.strip() != (element2.text.strip() if element2 is not None and element2.text is not None else ''):
-            changes.append((current_path, after_path, '', '', f'{element1.text.strip()} != {element2.text.strip() if element2 is not None and element2.text is not None else ""}'))
+        if (element1.text is not None and element1.text.strip() != (element2.text.strip() if element2 is not None and element2.text is not None else '')):
+            changes.append((current_path, after_path, '', '', 
+                            f'{element1.text.strip() if element1.text is not None else ""} != '
+                            f'{element2.text.strip() if element2 is not None and element2.text is not None else ""}'))
 
         children1 = list(element1)
         children2 = list(element2) if element2 is not None else []
@@ -1053,7 +1077,7 @@ class ComparisonPage_2(ctk.CTkFrame):
         #固定報表
         fixed_tag_new_folder = os.path.join(sd.report_output_path.get(), "fixed_tag_report")
         os.makedirs(fixed_tag_new_folder, exist_ok=True)
-        fixed_file_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.txt")
+        # fixed_file_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.txt")
         fixed_exl_path = os.path.join(fixed_tag_new_folder, f"fixed_tag_{current_time}.xlsx")
         
         #變動單獨報表
@@ -1071,6 +1095,6 @@ class ComparisonPage_2(ctk.CTkFrame):
         self.plural_results = []
         changed_a_tag_result, changed_tags_result= self.load_tag_and_path(self.before_file_directory, self.after_file_directory, exclude_tags)
         # self.print_fixedtag_file(fixed_file_path, exclude_tags, fixed_results, matches)
-        # self.export_to_fixed_excel(fixed_results, fixed_exl_path)
+        self.export_to_fixed_excel(fixed_results, fixed_exl_path)
         self.export_to_a_tag_excel(changed_a_tag_result, changed_a_tag_exl_path)
-        # self.export_to_tags_excel(changed_tags_result, changed_tags_exl_path)
+        self.export_to_tags_excel(changed_tags_result, changed_tags_exl_path)

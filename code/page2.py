@@ -106,8 +106,7 @@ class PositionSettingPage(ctk.CTkFrame):
         for filename in os.listdir(folder_path):
             file_path = os.path.join(folder_path, filename)
             if os.path.isfile(file_path):
-                base, ext = os.path.splitext(filename)
-                new_filename = f"{base}.{extension}"
+                new_filename = f"{filename}.{extension}"
                 new_file_path = os.path.join(folder_path, new_filename)
                 os.rename(file_path, new_file_path)
     

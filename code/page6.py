@@ -156,7 +156,7 @@ class CopyDataPage(ctk.CTkFrame):
         點擊copy會開始從BEFORE、AFTER複製想要的檔案到指定路徑
         '''
         
-        self.result_directory = os.path.join(sd.report_output_path.get(), 'copy')
+        self.result_directory = os.path.join(sd.report_output_path.get(), 'Copy_file')
         os.makedirs(self.result_directory, exist_ok=True)
 
         
@@ -217,8 +217,7 @@ class CopyDataPage(ctk.CTkFrame):
         self.before_file_directory = self.find_folders_with_split(sd.before_path.get())
         
         filenames = self.get_filenames_from_directory(self.before_file_directory)
-
-        file_path = os.path.join(sd.report_output_path.get(), 'copy_file_name.txt')
+        file_path = os.path.join(sd.report_output_path.get(), 'Copy_file_name.txt')
         
         
         with open(file_path, 'w') as file:
@@ -280,6 +279,8 @@ class CopyDataPage(ctk.CTkFrame):
             if clean_file_name not in listbox_items:
                 self.listbox.insert(tk.END, f"{clean_file_name}")
                 self.update_line_numbers()
+                self.file_name_entry.delete(0, 'end')
+
             else:
                 tk.messagebox.showwarning("Warning", "已經有相同的項目")
         else:

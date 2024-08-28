@@ -63,7 +63,7 @@ class SearchPage(ctk.CTkFrame):
         self.y_scrollbar = tk.Scrollbar(self.bottom_right_frame, orient=tk.VERTICAL, command=self._scroll_both)
         self.y_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.line_numbers = tk.Listbox(self.bottom_right_frame, width=4, font=("Helvetica", 14))
+        self.line_numbers = tk.Listbox(self.bottom_right_frame, width=4, font=("Helvetica", 14), yscrollcommand=self._sync_scroll)
         self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
 
         self.left_listbox = tk.Listbox(self.bottom_right_frame, font=("Helvetica", 14), yscrollcommand=self._sync_scroll)
@@ -83,6 +83,7 @@ class SearchPage(ctk.CTkFrame):
         self.right_listbox['xscrollcommand'] = self.right_x_scrollbar.set
         self.right_listbox.bind("<Key>", lambda e: "break")
         
+
     def create_path_selector(self, frame, label_text, entry_width, button_text, command):
         label = ctk.CTkLabel(frame, text=label_text, anchor="w")
         label.pack(side=tk.LEFT, pady=5, padx=5)
@@ -101,14 +102,20 @@ class SearchPage(ctk.CTkFrame):
             file_name = xml_path.split("/")[-1].split(".")[0]
             entry.delete(0, tk.END)
             entry.insert(0, file_name)
-    
+
     def _sync_scroll(self, *args):
+        '''
+        拉動Y滾軸時三個listbox會一起變動，滾輪的位置也會變動
+        '''
+        self.y_scrollbar.set(*args)
         self.line_numbers.yview_moveto(args[0])
         self.left_listbox.yview_moveto(args[0])
         self.right_listbox.yview_moveto(args[0])
 
-
     def _scroll_both(self, *args):
+        '''
+        在listbox上面用滑鼠滾輪滑動時，三個畫面會一起變動
+        '''
         self.line_numbers.yview(*args)
         self.left_listbox.yview(*args)
         self.right_listbox.yview(*args)
@@ -159,7 +166,7 @@ class SearchPage(ctk.CTkFrame):
             for file in files:
                if file.startswith(filename) and file.endswith('.xml'):
                    return os.path.join(root, file)
-        messagebox.showinfo("File Not Found", f"No file starting with {filename} and ending with .xml found in {directory}.")
+        messagebox.showinfo("File Not Found", f"在 {directory}中沒有找到 {filename}，請重新檢查檔案名稱。")
         
         return None
     
@@ -284,8 +291,18 @@ class SearchPage(ctk.CTkFrame):
                 self.left_listbox.insert(tk.END, "")
                 self.left_listbox.itemconfig(tk.END, {'bg':'grey'})
                 new_index += 1
+        self.update_line_numbers()
 
-
+    def update_line_numbers(self, event=None):
+        '''
+        更新文件內容行數列，並且寬度會隨著數量調整
+        '''
+        self.line_numbers.delete(0, tk.END)
+        line_count = max(self.left_listbox.size(), self.right_listbox.size())
+        max_digits = len(str(line_count))
+        self.line_numbers.config(width=max_digits + 1)
+        for i in range(1, line_count + 1):
+            self.line_numbers.insert(tk.END, str(i))
 
 
 
