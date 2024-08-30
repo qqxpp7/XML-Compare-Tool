@@ -7,6 +7,14 @@ XML比對工具
 - 透過比對找出檔案的前後差異
 - 產出詳細EXCEL報告
 ## 使用方法
-
+###主要功能
+1. 位置設定:file_folder:
+2. XML拆分:scissors:
+3. 找出差異:mag_right:
+4. 比對:bookmark_tabs:
+---
+###其他功能
+  搜尋:mag:
+  Copy資料:books:
 ## 授權
 此專案使用 [MIT 授權](LICENSE)。
