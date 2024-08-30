@@ -28,6 +28,10 @@
 * After 是修改後的未拆分xml 檔案，拆分後會在底下生成 after_split資料夾、
 * Final 是存放所有執行紀錄與報表的資料夾。
 
+#### 額外下載的Python library
+* customtkinter
+* pandas
+
 ### Final產生資料 :outbox_tray:
 #### 資料夾 :file_folder:
 * Split_report
