@@ -14,7 +14,7 @@ XML比對工具
 4. 比對 :bookmark_tabs:
 ---
 ### 其他功能
-  搜尋 :mag:
-  Copy資料 :books:
+* 搜尋 :mag:
+* Copy資料 :books:
 ## 授權
 此專案使用 [MIT 授權](LICENSE)。
