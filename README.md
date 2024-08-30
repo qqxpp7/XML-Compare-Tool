@@ -26,17 +26,27 @@ XML比對工具
 
 ### final產生資料
 #### 資料夾
-* Split_report：         在02 XML拆分->拆分->所產生的結果，是拆分 Before、After 資料夾的執行紀錄，會紀錄是否有重複名稱。
-* Move_file：            在03找出差異->移動差異檔案->所產生的結果，是beforeSplit 跟after_split 有差異的檔案。
-* Different_report：     在03找出差異->執行->所產生的結果，是比對before_Split 跟 after_split 差異檔案的轨行紀錄
-* Fixed_tag_report：     在04比對->下一頁->執行->所產生的结果，是固定Element 的excel 資料夾。
-* Changed_a_tag_report： 在04比對->下一頁->執行->所產生的結果，是變動單一Element 的 excel 資料夾。
-* Changed_tags_report：  在04比對->下一頁->執行->所產生的結果，是變動複數Element的excel 資料夾。
-* Copy_file：            在Copy 資料->COPY->所產生的结果，會從before_split 跟after_split 複製特定 XML 到此資料夾。
+* Split_report
+> 在02 XML拆分->拆分->所產生的結果，是拆分 Before、After 資料夾的執行紀錄，會紀錄是否有重複名稱。
+* Move_file
+> 在03找出差異->移動差異檔案->所產生的結果，是beforeSplit 跟after_split 有差異的檔案。
+* Different_report
+> 在03找出差異->執行->所產生的結果，是比對before_Split 跟 after_split 差異檔案的轨行紀錄
+* Fixed_tag_report
+> 在04比對->下一頁->執行->所產生的结果，是固定Element 的excel 資料夾。
+* Changed_a_tag_report
+> 在04比對->下一頁->執行->所產生的結果，是變動單一Element 的 excel 資料夾。
+* Changed_tags_report
+* > 在04比對->下一頁->執行->所產生的結果，是變動複數Element的excel 資料夾。
+* Copy_file
+> 在Copy 資料->COPY->所產生的结果，會從before_split 跟after_split 複製特定 XML 到此資料夾。
 #### 文件
-* Compare_file_name.txt：在04比對->下載->所產生的結果，是before_split資料夾下的所有檔名。
-* Compare_file_tag.txt： 在04比對->下一頁->下載->所產生的結果，是 before-_split 資料夾下隨機一份檔案內的所有element及它的上一層。
-* Copy_file_name.txt：   在 Copy 資料->下載->所產生的結果，是before_split資料夾下的所有 Xml檔名。
+* Compare_file_name.txt
+> 在04比對->下載->所產生的結果，是before_split資料夾下的所有檔名。
+* Compare_file_tag.txt
+> 在04比對->下一頁->下載->所產生的結果，是 before-_split 資料夾下隨機一份檔案內的所有element及它的上一層。
+* Copy_file_name.txt
+> 在 Copy 資料->下載->所產生的結果，是before_split資料夾下的所有 Xml檔名。
 
 ### 主要功能
 1. 位置設定 :file_folder:
