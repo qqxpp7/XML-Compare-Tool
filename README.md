@@ -1,11 +1,11 @@
 ## 目錄 :bookmark:
-- [專案介紹 :loudspeaker:](#專案介紹-)
+- [專案介紹](#專案介紹)
 - [使用方法](#使用方法)
-- [預先準備 :pushpin:](#預先準備-)
-- [功能介紹 :wrench:](#功能介紹-)
-- [授權 :scroll:](#授權-)
+- [預先準備](#預先準備)
+- [功能介紹](#功能介紹)
+- [授權](#授權)
 
-## 專案介紹 :loudspeaker:
+## 專案介紹
 * 將大的XML檔案拆分為多個小的XML檔案
 * 透過比對找出檔案的前後差異
 * 產出詳細EXCEL報告
@@ -22,7 +22,7 @@
 * Page6：             Copy 資料
 * Page7：             Element 分割
 
-### 預先準備 :pushpin:
+### 預先準備
 請先在電腦裡建立好三個資料夾，裡面包含 Before、After、Final三個資料夾。
 * Before 是原本的未拆分xml 檔案，拆分後會在底下生成 before_split資料夾。
 * After 是修改後的未拆分xml 檔案，拆分後會在底下生成 after_split資料夾、
@@ -53,7 +53,7 @@
 * Copy_file_name.txt
 > 在 Copy 資料->下載->所產生的結果，是before_split資料夾下的所有 Xml檔名。
 
-## 功能介紹 :wrench:
+## 功能介紹
 ### 主要功能
 1. 位置設定 :file_folder:
 > 允許使用者設定before資料夾、after資料夾，以及輸出結果儲存的位置final資料夾。
@@ -71,5 +71,5 @@
 > 使用者上傳指定的檔案名稱，將其從before_split資料夾與after_split資料夾複製到final資料夾下的Copy_file資料夾。
 * Element 分割 :page_facing_up:
 
-## 授權 :scroll:
+## :scroll: 授權
 此專案使用 [MIT 授權](LICENSE)。
