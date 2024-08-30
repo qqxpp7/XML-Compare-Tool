@@ -15,15 +15,15 @@ XML比對工具
 
 ## 使用方法
 ### Code名稱
-* xml_compare_tool： 主畫面
-* Pagel：            搜尋
-* Page2：            01 位置設定
-* Page3：            02 XML拆分
-* Page4：            03 找出差異
-* Page5：            04 比對-1/2 選擇範圖
-* Page5_2：          04 比對-2/2選擇 Element
-* Page6：            Copy 資料
-* Page7：            Element 分割
+* xml_compare_tool：>  主畫面
+* Pagel：>             搜尋
+* Page2：>             01 位置設定
+* Page3：>             02 XML拆分
+* Page4：>             03 找出差異
+* Page5：>             04 比對-1/2 選擇範圖
+* Page5_2：>           04 比對-2/2選擇 Element
+* Page6：>             Copy 資料
+* Page7：>             Element 分割
 
 ### 預先準備
 請先在電腦裡建立好三個資料夾，裡面包含 Before、After、Final三個資料夾。
