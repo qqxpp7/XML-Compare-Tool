@@ -1,6 +1,11 @@
+## 目錄
+- [功能特點](#功能特點)
+- [使用方法](#使用方法)
+- [授權](#授權)
+- 
 # XML-Compare-Tool
 XML比對工具
-## 簡介
+
 ## 功能特點
 * 將大的XML檔案拆分為多個小的XML檔案
 * 透過比對找出檔案的前後差異
@@ -37,7 +42,7 @@ XML比對工具
 * Changed_a_tag_report
 > 在04比對->下一頁->執行->所產生的結果，是變動單一Element 的 excel 資料夾。
 * Changed_tags_report
-* > 在04比對->下一頁->執行->所產生的結果，是變動複數Element的excel 資料夾。
+> 在04比對->下一頁->執行->所產生的結果，是變動複數Element的excel 資料夾。
 * Copy_file
 > 在Copy 資料->COPY->所產生的结果，會從before_split 跟after_split 複製特定 XML 到此資料夾。
 #### 文件
