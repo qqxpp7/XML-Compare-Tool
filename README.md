@@ -25,9 +25,9 @@
 ### 預先準備
 #### 電腦內建資料夾
 * Before
-> 原本的未拆分xml 檔案，拆分後會在底下生成 before_split資料夾。
+> 有原本的未拆分xml 檔案，拆分後會在底下生成 before_split資料夾。
 * After
-> 修改後的未拆分xml 檔案，拆分後會在底下生成 after_split資料夾、
+> 有修改後的未拆分xml 檔案，拆分後會在底下生成 after_split資料夾、
 * Final
 > 是存放所有執行紀錄與報表的資料夾。
 
