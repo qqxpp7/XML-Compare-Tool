@@ -23,10 +23,13 @@
 * Page7：             Element 分割
 
 ### 預先準備
-請先在電腦裡建立好三個資料夾，裡面包含 Before、After、Final三個資料夾。
-* Before 是原本的未拆分xml 檔案，拆分後會在底下生成 before_split資料夾。
-* After 是修改後的未拆分xml 檔案，拆分後會在底下生成 after_split資料夾、
-* Final 是存放所有執行紀錄與報表的資料夾。
+#### 電腦內建資料夾
+* Before
+> 原本的未拆分xml 檔案，拆分後會在底下生成 before_split資料夾。
+* After
+> 修改後的未拆分xml 檔案，拆分後會在底下生成 after_split資料夾、
+* Final
+> 是存放所有執行紀錄與報表的資料夾。
 
 #### 額外下載的Python library
 * customtkinter
