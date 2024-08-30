@@ -28,7 +28,7 @@
 * After 是修改後的未拆分xml 檔案，拆分後會在底下生成 after_split資料夾、
 * Final 是存放所有執行紀錄與報表的資料夾。
 
-### Final產生資料
+### Final產生資料 :outbox_tray:
 #### 資料夾 :file_folder:
 * Split_report
 > 在02 XML拆分->拆分->所產生的結果，是拆分 Before、After 資料夾的執行紀錄，會紀錄是否有重複名稱。
