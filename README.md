@@ -8,15 +8,15 @@ XML比對工具
 
 ## 使用方法
 ### Code名稱
-* xml_compare_tool: 主畫面
-* Pagel:            搜尋
-* Page2:            01 位置設定
-* Page3:            02 XML拆分
-* Page4:            03 找出差異
-* Page5:            04 比對-1/2 選擇範圖
-* Page5_2:          04 比對-2/2選擇 Element
-* Page6:            Copy 資料
-* Page7:            Element 分割
+* <span style="color:red">xml_compare_tool：</span> 主畫面
+* Pagel：            搜尋
+* Page2：            01 位置設定
+* Page3：            02 XML拆分
+* Page4：            03 找出差異
+* Page5：            04 比對-1/2 選擇範圖
+* Page5_2：          04 比對-2/2選擇 Element
+* Page6：            Copy 資料
+* Page7：            Element 分割
 
 ### 預先準備
 請先在電腦裡建立好三個資料夾，裡面包含 Before、After、Final三個資料夾。
@@ -30,8 +30,8 @@ XML比對工具
 * Move_file：            在03找出差異->移動差異檔案->所產生的結果，是beforeSplit 跟after_split 有差異的檔案。
 * Different_report：     在03找出差異->執行->所產生的結果，是比對before_Split 跟 after_split 差異檔案的轨行紀錄
 * Fixed_tag_report：     在04比對->下一頁->執行->所產生的结果，是固定Element 的excel 資料夾。
-* Changed_a_tag_report:  在04比對->下一頁->執行->所產生的結果，是變動單一Element 的 excel 資料夾。
-* Changed_tags_report:   在04比對->下一頁->執行->所產生的結果，是變動複數Element的excel 資料夾。
+* Changed_a_tag_report： 在04比對->下一頁->執行->所產生的結果，是變動單一Element 的 excel 資料夾。
+* Changed_tags_report：  在04比對->下一頁->執行->所產生的結果，是變動複數Element的excel 資料夾。
 * Copy_file：            在Copy 資料->COPY->所產生的结果，會從before_split 跟after_split 複製特定 XML 到此資料夾。
 #### 文件
 * Compare_file_name.txt：在04比對->下载->所產生的結果，是before_split資料夾下的所有檔名。
