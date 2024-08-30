@@ -71,5 +71,5 @@
 > 使用者上傳指定的檔案名稱，將其從before_split資料夾與after_split資料夾複製到final資料夾下的Copy_file資料夾。
 * Element 分割 :page_facing_up:
 
-## :scroll: 授權
+## 授權
 此專案使用 [MIT 授權](LICENSE)。
