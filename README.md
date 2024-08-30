@@ -28,7 +28,7 @@
 * After 是修改後的未拆分xml 檔案，拆分後會在底下生成 after_split資料夾、
 * Final 是存放所有執行紀錄與報表的資料夾。
 
-### final產生資料
+### Final產生資料
 #### 資料夾 :file_folder:
 * Split_report
 > 在02 XML拆分->拆分->所產生的結果，是拆分 Before、After 資料夾的執行紀錄，會紀錄是否有重複名稱。
@@ -44,6 +44,7 @@
 > 在04比對->下一頁->執行->所產生的結果，是變動複數Element的excel 資料夾。
 * Copy_file
 > 在Copy 資料->COPY->所產生的结果，會從before_split 跟after_split 複製特定 XML 到此資料夾。
+
 #### 文件 :page_facing_up:
 * Compare_file_name.txt
 > 在04比對->下載->所產生的結果，是before_split資料夾下的所有檔名。
@@ -62,13 +63,13 @@
 > 用於比對 before_split和 after_split資料夾中擁有相同檔名的文件數量，找出只存在於一方的XML文件，並將差一檔案移動到指定資料夾，同時生成執行紀錄。
 4. 比對 :bookmark_tabs:
 > 允許使用者手動上傳想要比對的檔案名稱，並新增要比對的Element，最終會產生三個報表：固定Element報表、變動單一Element報表、變動複數Element報表。
+
 ### 其他功能
 * 搜尋 :mag:
 > 使用者選取指定檔案，並展示其在before_split資料夾與after_split資料夾中的內容。
 * Copy資料 :books:
 > 使用者上傳指定的檔案名稱，將其從before_split資料夾與after_split資料夾複製到final資料夾下的Copy_file資料夾。
 * Element 分割 :page_facing_up:
-
 
 ## 授權 :scroll:
 此專案使用 [MIT 授權](LICENSE)。
